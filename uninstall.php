@@ -24,6 +24,8 @@ foreach ($video_teasers as $teaser) {
     delete_post_meta($teaser->ID, '_video_id');
     delete_post_meta($teaser->ID, '_start_time');
     delete_post_meta($teaser->ID, '_end_time');
+    delete_post_meta($teaser->ID, '_button_color');
+    delete_post_meta($teaser->ID, '_icon_color');
     
     // Force delete the post (bypass trash)
     wp_delete_post($teaser->ID, true);
@@ -31,7 +33,7 @@ foreach ($video_teasers as $teaser) {
 
 // Remove any orphaned meta data (safety cleanup)
 global $wpdb;
-$wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_youtube_url%' OR meta_key LIKE '_video_id%' OR meta_key LIKE '_start_time%' OR meta_key LIKE '_end_time%'");
+$wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_youtube_url%' OR meta_key LIKE '_video_id%' OR meta_key LIKE '_start_time%' OR meta_key LIKE '_end_time%' OR meta_key LIKE '_button_color%' OR meta_key LIKE '_icon_color%'");
 
 // Clear any cached data
 wp_cache_flush();

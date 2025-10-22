@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Video Teaser
- * Plugin URI: https://github.com/your-repo/video-teaser
+ * Plugin URI: https://github.com/breonwilliams/video-teaser
  * Description: Create engaging YouTube video teasers with autoplay loop and click-to-play functionality for WordPress.
  * Version: 1.0.0
- * Author: Video Teaser Team
- * Author URI: https://your-website.com
+ * Author: Breon Williams
+ * Author URI: https://breonwilliams.com
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: video-teaser
@@ -107,6 +107,8 @@ function video_teaser_settings_callback($post) {
     $youtube_url = get_post_meta($post->ID, '_youtube_url', true);
     $start_time = get_post_meta($post->ID, '_start_time', true);
     $end_time = get_post_meta($post->ID, '_end_time', true);
+    $button_color = get_post_meta($post->ID, '_button_color', true) ?: '#ffffff';
+    $icon_color = get_post_meta($post->ID, '_icon_color', true) ?: '#000000';
     ?>
     <table class="form-table">
         <tr>
@@ -128,6 +130,20 @@ function video_teaser_settings_callback($post) {
             <td>
                 <input type="number" id="end_time" name="end_time" value="<?php echo esc_attr($end_time ?: 10); ?>" min="1" />
                 <p class="description"><?php _e('When to end the teaser segment', 'video-teaser'); ?></p>
+            </td>
+        </tr>
+        <tr>
+            <th><label for="button_color"><?php _e('Play Button Color', 'video-teaser'); ?></label></th>
+            <td>
+                <input type="color" id="button_color" name="button_color" value="<?php echo esc_attr($button_color); ?>" />
+                <p class="description"><?php _e('Background color for the play button', 'video-teaser'); ?></p>
+            </td>
+        </tr>
+        <tr>
+            <th><label for="icon_color"><?php _e('Play Icon Color', 'video-teaser'); ?></label></th>
+            <td>
+                <input type="color" id="icon_color" name="icon_color" value="<?php echo esc_attr($icon_color); ?>" />
+                <p class="description"><?php _e('Color for the play triangle icon', 'video-teaser'); ?></p>
             </td>
         </tr>
     </table>
@@ -187,6 +203,22 @@ function video_teaser_save_meta($post_id) {
     
     update_post_meta($post_id, '_start_time', $start_time);
     update_post_meta($post_id, '_end_time', $end_time);
+    
+    // Save button color
+    if (isset($_POST['button_color'])) {
+        $button_color = sanitize_hex_color($_POST['button_color']);
+        if ($button_color) {
+            update_post_meta($post_id, '_button_color', $button_color);
+        }
+    }
+    
+    // Save icon color
+    if (isset($_POST['icon_color'])) {
+        $icon_color = sanitize_hex_color($_POST['icon_color']);
+        if ($icon_color) {
+            update_post_meta($post_id, '_icon_color', $icon_color);
+        }
+    }
 }
 
 // Validate YouTube URL
@@ -211,6 +243,7 @@ function video_teaser_extract_video_id($url) {
     return isset($matches[1]) ? $matches[1] : false;
 }
 
+
 // Shortcode function
 function video_teaser_shortcode($atts) {
     $atts = shortcode_atts(array(
@@ -231,6 +264,8 @@ function video_teaser_shortcode($atts) {
     $video_id = get_post_meta($post_id, '_video_id', true);
     $start_time = get_post_meta($post_id, '_start_time', true) ?: 0;
     $end_time = get_post_meta($post_id, '_end_time', true) ?: 10;
+    $button_color = get_post_meta($post_id, '_button_color', true) ?: '#ffffff';
+    $icon_color = get_post_meta($post_id, '_icon_color', true) ?: '#000000';
 
     if (empty($youtube_url) || empty($video_id)) {
         return '<p>' . __('Video teaser not configured', 'video-teaser') . '</p>';
@@ -240,19 +275,27 @@ function video_teaser_shortcode($atts) {
 
     ob_start();
     ?>
+    <style>
+    #<?php echo esc_attr($unique_id); ?> {
+        --button-color: <?php echo esc_attr($button_color); ?>;
+        --icon-color: <?php echo esc_attr($icon_color); ?>;
+    }
+    </style>
     <div class="video-teaser-container" id="<?php echo esc_attr($unique_id); ?>" 
          data-video-id="<?php echo esc_attr($video_id); ?>" 
          data-start="<?php echo esc_attr($start_time); ?>" 
          data-end="<?php echo esc_attr($end_time); ?>">
         <div class="video-player" id="<?php echo esc_attr($unique_id); ?>-player"></div>
-        <div class="video-overlay" onclick="videoTeaserPlay('<?php echo esc_js($unique_id); ?>')">
-            <div class="play-indicator">
-                <div class="play-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 5v14l11-7z" fill="currentColor"/>
-                    </svg>
-                </div>
-                <span class="play-text"><?php _e('Click to play full video', 'video-teaser'); ?></span>
+        <div class="video-overlay" 
+             onclick="videoTeaserPlay('<?php echo esc_js($unique_id); ?>')"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();videoTeaserPlay('<?php echo esc_js($unique_id); ?>')}"
+             tabindex="0"
+             role="button"
+             aria-label="<?php esc_attr_e('Play video', 'video-teaser'); ?>">
+            <div class="play-button">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 5v14l11-7z" fill="currentColor"/>
+                </svg>
             </div>
         </div>
     </div>
@@ -296,7 +339,7 @@ function video_teaser_add_inline_styles() {
         width: 100%;
         height: 100%;
         border: none;
-        pointer-events: none; /* Disable clicks on YouTube iframe */
+        pointer-events: none;
     }
     
     .video-teaser-container .video-overlay {
@@ -305,60 +348,38 @@ function video_teaser_add_inline_styles() {
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.1);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.3s ease;
         z-index: 10;
         pointer-events: auto;
         opacity: 0;
+        transition: opacity 0.3s ease;
     }
     
     .video-teaser-container:hover .video-overlay {
         opacity: 1;
-        background: rgba(0, 0, 0, 0.4);
     }
     
-    .video-teaser-container .play-indicator {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        color: white;
-        text-align: center;
-        transition: transform 0.3s ease;
-        background: rgba(0, 0, 0, 0.7);
-        padding: 16px 20px;
-        border-radius: 12px;
-        backdrop-filter: blur(10px);
-    }
-    
-    .video-teaser-container:hover .play-indicator {
-        transform: scale(1.05);
-    }
-    
-    .video-teaser-container .play-icon {
+    .video-teaser-container .play-button {
+        width: 80px;
+        height: 80px;
+        background: var(--button-color, #ffffff);
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 48px;
-        height: 48px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
-        transition: background 0.3s ease;
+        transition: transform 0.2s ease;
     }
     
-    .video-teaser-container:hover .play-icon {
-        background: rgba(255, 255, 255, 0.3);
+    .video-teaser-container:hover .play-button {
+        transform: scale(1.1);
     }
     
-    .video-teaser-container .play-text {
-        font-size: 14px;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    .video-teaser-container .play-button svg {
+        color: var(--icon-color, #000000);
+        transform: translateX(2px);
     }
     
     .video-teaser-container.playing .video-overlay {
@@ -369,19 +390,26 @@ function video_teaser_add_inline_styles() {
         pointer-events: auto;
     }
     
+    /* Focus state for keyboard navigation */
+    .video-teaser-container .video-overlay:focus {
+        outline: 3px solid var(--icon-color, #000000);
+        outline-offset: 2px;
+    }
+    
+    .video-teaser-container .video-overlay:focus .play-button {
+        transform: scale(1.1);
+    }
+    
     /* Mobile adjustments */
     @media (max-width: 768px) {
-        .video-teaser-container .play-indicator {
-            padding: 12px 16px;
+        .video-teaser-container .play-button {
+            width: 64px;
+            height: 64px;
         }
         
-        .video-teaser-container .play-icon {
-            width: 40px;
-            height: 40px;
-        }
-        
-        .video-teaser-container .play-text {
-            font-size: 12px;
+        .video-teaser-container .play-button svg {
+            width: 48px;
+            height: 48px;
         }
     }
     </style>
@@ -438,7 +466,7 @@ function video_teaser_add_inline_scripts() {
             
             // Create iframe with teaser parameters
             var embedUrl = 'https://www.youtube.com/embed/' + videoId + 
-                          '?autoplay=1&mute=1&controls=0&showinfo=0&rel=0' +
+                          '?autoplay=1&mute=1&controls=0&rel=0' +
                           '&start=' + startTime + '&end=' + endTime +
                           '&loop=1&playlist=' + videoId + '&modestbranding=1';
             
