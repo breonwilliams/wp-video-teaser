@@ -109,6 +109,7 @@ function video_teaser_settings_callback($post) {
     $end_time = get_post_meta($post->ID, '_end_time', true);
     $button_color = get_post_meta($post->ID, '_button_color', true) ?: '#ffffff';
     $icon_color = get_post_meta($post->ID, '_icon_color', true) ?: '#000000';
+    $always_show_button = get_post_meta($post->ID, '_always_show_button', true);
     ?>
     <table class="form-table">
         <tr>
@@ -146,6 +147,16 @@ function video_teaser_settings_callback($post) {
                 <p class="description"><?php _e('Color for the play triangle icon', 'video-teaser'); ?></p>
             </td>
         </tr>
+        <tr>
+            <th><label for="always_show_button"><?php _e('Play Button Visibility', 'video-teaser'); ?></label></th>
+            <td>
+                <label for="always_show_button">
+                    <input type="checkbox" id="always_show_button" name="always_show_button" value="1" <?php checked($always_show_button, '1'); ?> />
+                    <?php _e('Always show play button', 'video-teaser'); ?>
+                </label>
+                <p class="description"><?php _e('When unchecked, play button only appears on hover', 'video-teaser'); ?></p>
+            </td>
+        </tr>
     </table>
     <?php
 }
@@ -154,7 +165,7 @@ function video_teaser_settings_callback($post) {
 function video_teaser_shortcode_callback($post) {
     ?>
     <p><?php _e('Use this shortcode to display the video teaser:', 'video-teaser'); ?></p>
-    <input type="text" value="[video_teaser id=&quot;<?php echo $post->ID; ?>&quot;]" readonly class="regular-text" onclick="this.select();" />
+    <input type="text" value="[video_teaser id=&quot;<?php echo $post->ID; ?>&quot;]" readonly style="width: 100%; font-size: 12px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9; font-family: monospace;" onclick="this.select();" />
     <p class="description"><?php _e('Click to select and copy', 'video-teaser'); ?></p>
     <?php
 }
@@ -219,6 +230,10 @@ function video_teaser_save_meta($post_id) {
             update_post_meta($post_id, '_icon_color', $icon_color);
         }
     }
+    
+    // Save always show button setting
+    $always_show_button = isset($_POST['always_show_button']) ? '1' : '0';
+    update_post_meta($post_id, '_always_show_button', $always_show_button);
 }
 
 // Validate YouTube URL
@@ -266,12 +281,17 @@ function video_teaser_shortcode($atts) {
     $end_time = get_post_meta($post_id, '_end_time', true) ?: 10;
     $button_color = get_post_meta($post_id, '_button_color', true) ?: '#ffffff';
     $icon_color = get_post_meta($post_id, '_icon_color', true) ?: '#000000';
+    $always_show_button = get_post_meta($post_id, '_always_show_button', true);
 
     if (empty($youtube_url) || empty($video_id)) {
         return '<p>' . __('Video teaser not configured', 'video-teaser') . '</p>';
     }
 
     $unique_id = 'video-teaser-' . $post_id . '-' . uniqid();
+    $container_class = 'video-teaser-container';
+    if ($always_show_button === '1') {
+        $container_class .= ' always-show-button';
+    }
 
     ob_start();
     ?>
@@ -281,7 +301,7 @@ function video_teaser_shortcode($atts) {
         --icon-color: <?php echo esc_attr($icon_color); ?>;
     }
     </style>
-    <div class="video-teaser-container" id="<?php echo esc_attr($unique_id); ?>" 
+    <div class="<?php echo esc_attr($container_class); ?>" id="<?php echo esc_attr($unique_id); ?>" 
          data-video-id="<?php echo esc_attr($video_id); ?>" 
          data-start="<?php echo esc_attr($start_time); ?>" 
          data-end="<?php echo esc_attr($end_time); ?>">
@@ -306,9 +326,18 @@ function video_teaser_shortcode($atts) {
 // Enqueue scripts and styles
 add_action('wp_enqueue_scripts', 'video_teaser_enqueue_scripts');
 function video_teaser_enqueue_scripts() {
-    // Always load scripts and styles on frontend for reliability
+    // Always load scripts and styles for reliability
     add_action('wp_head', 'video_teaser_add_inline_styles');
+    add_action('wp_head', 'video_teaser_add_preconnect_hints');
     add_action('wp_footer', 'video_teaser_add_inline_scripts');
+}
+
+// Add preconnect hints for performance
+function video_teaser_add_preconnect_hints() {
+    echo '<link rel="preconnect" href="https://www.youtube.com" crossorigin>' . "\n";
+    echo '<link rel="preconnect" href="https://img.youtube.com" crossorigin>' . "\n";
+    echo '<link rel="dns-prefetch" href="//www.youtube.com">' . "\n";
+    echo '<link rel="dns-prefetch" href="//img.youtube.com">' . "\n";
 }
 
 // Add inline CSS
@@ -359,6 +388,10 @@ function video_teaser_add_inline_styles() {
     }
     
     .video-teaser-container:hover .video-overlay {
+        opacity: 1;
+    }
+    
+    .video-teaser-container.always-show-button .video-overlay {
         opacity: 1;
     }
     
@@ -423,6 +456,7 @@ function video_teaser_add_inline_scripts() {
     <script>
     window.VideoTeaser = window.VideoTeaser || (function() {
         var videoTeaserData = {};
+        var currentlyActiveVideo = null;
         var debugMode = <?php echo $debug_mode; ?>;
         
         // Debug logging (only in development)
@@ -432,7 +466,7 @@ function video_teaser_add_inline_scripts() {
             }
         }
         
-        // Initialize video teasers with simple iframe approach
+        // Initialize video teasers with immediate teaser loading
         function initializeVideoTeasers() {
             var containers = document.querySelectorAll('.video-teaser-container');
             log('Found ' + containers.length + ' containers');
@@ -483,9 +517,53 @@ function video_teaser_add_inline_scripts() {
             log('Teaser embed created successfully');
         }
         
-        // Public function for click handler - switch to full video
+        // Revert video back to teaser state
+        function revertToTeaser(containerId) {
+            log('Reverting to teaser: ' + containerId);
+            var container = document.getElementById(containerId);
+            var data = videoTeaserData[containerId];
+            
+            if (!data || !container) {
+                log('No data or container found for revert');
+                return;
+            }
+            
+            // Mark as teaser again
+            data.isTeaser = true;
+            container.classList.remove('playing');
+            
+            // Clear active video if this was the active one
+            if (currentlyActiveVideo === containerId) {
+                currentlyActiveVideo = null;
+            }
+            
+            var playerId = containerId + '-player';
+            var playerElement = document.getElementById(playerId);
+            
+            if (playerElement) {
+                // Switch back to teaser with loop
+                var teaserUrl = 'https://www.youtube.com/embed/' + data.videoId + 
+                              '?autoplay=1&mute=1&controls=0&rel=0' +
+                              '&start=' + data.startTime + '&end=' + data.endTime +
+                              '&loop=1&playlist=' + data.videoId + '&modestbranding=1';
+                
+                playerElement.innerHTML = '<iframe width="100%" height="100%" src="' + teaserUrl + 
+                                         '" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
+                
+                log('Reverted to teaser successfully');
+            }
+        }
+        
+        // Main function for click handler - switch to full video
         function videoTeaserPlay(containerId) {
             log('Play clicked for: ' + containerId);
+            
+            // If another video is currently active, revert it to teaser
+            if (currentlyActiveVideo && currentlyActiveVideo !== containerId) {
+                log('Reverting currently active video: ' + currentlyActiveVideo);
+                revertToTeaser(currentlyActiveVideo);
+            }
+            
             var container = document.getElementById(containerId);
             var data = videoTeaserData[containerId];
             
@@ -494,6 +572,8 @@ function video_teaser_add_inline_scripts() {
                 return;
             }
             
+            // Set this video as the currently active one
+            currentlyActiveVideo = containerId;
             data.isTeaser = false;
             container.classList.add('playing');
             
@@ -528,6 +608,7 @@ function video_teaser_add_inline_scripts() {
         // Public API
         return {
             play: videoTeaserPlay,
+            revert: revertToTeaser,
             init: init
         };
     })();
