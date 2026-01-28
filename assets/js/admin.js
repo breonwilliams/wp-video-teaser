@@ -15,17 +15,15 @@
        Tab Switching
        ------------------------------------------- */
     function initTabs() {
-        var $radios = $('input[name="vt_source_type_radio"]');
+        var $sourceSelect = $('#vt_source_type');
         var $panels = $('.vt-tab-panel');
-        var $sourceInput = $('#vt_source_type');
 
-        $radios.on('change', function () {
+        $sourceSelect.on('change', function () {
             var tab = $(this).val();
 
             $panels.removeClass('vt-tab-panel--active');
             $panels.filter('[data-panel="' + tab + '"]').addClass('vt-tab-panel--active');
 
-            $sourceInput.val(tab);
             updatePreview();
         });
     }
@@ -77,6 +75,53 @@
             $selectBtn.find('.vt-media-btn-label').text(vtAdmin.selectLabel);
             vtAdmin.mediaUrl = '';
             updatePreview();
+        });
+    }
+
+    /* -------------------------------------------
+       Poster Image Picker
+       ------------------------------------------- */
+    function initPosterPicker() {
+        var frame;
+        var $selectBtn = $('#vt-poster-select');
+        var $preview = $('#vt-poster-preview');
+        var $thumb = $('#vt-poster-thumb');
+        var $input = $('#vt_poster_image');
+        var $removeBtn = $('#vt-poster-remove');
+
+        $selectBtn.on('click', function (e) {
+            e.preventDefault();
+
+            if (frame) {
+                frame.open();
+                return;
+            }
+
+            frame = wp.media({
+                title: vtAdmin.posterTitle,
+                button: { text: vtAdmin.posterButton },
+                library: { type: 'image' },
+                multiple: false,
+            });
+
+            frame.on('select', function () {
+                var attachment = frame.state().get('selection').first().toJSON();
+                var url = attachment.sizes && attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url;
+                $input.val(attachment.id);
+                $thumb.attr('src', url);
+                $preview.show();
+                $selectBtn.find('.vt-poster-btn-label').text(vtAdmin.posterChangeLabel);
+            });
+
+            frame.open();
+        });
+
+        $removeBtn.on('click', function (e) {
+            e.preventDefault();
+            $input.val('');
+            $thumb.attr('src', '');
+            $preview.hide();
+            $selectBtn.find('.vt-poster-btn-label').text(vtAdmin.posterSelectLabel);
         });
     }
 
@@ -216,41 +261,63 @@
         previewDebounce = setTimeout(doUpdatePreview, 300);
     }
 
+    function showUrlError(msg) {
+        var source = getCurrentSource();
+        var inputId = '';
+        if (source.type === 'youtube') inputId = 'vt_youtube_url';
+        else if (source.type === 'vimeo') inputId = 'vt_vimeo_url';
+        else if (source.type === 'external') inputId = 'vt_external_url';
+        if (!inputId) return;
+
+        var $input = $('#' + inputId);
+        var $error = $input.next('.vt-url-error');
+        if (!$error.length) {
+            $error = $('<span class="vt-url-error"></span>').insertAfter($input);
+        }
+        $error.text(msg).show();
+    }
+
+    function hideUrlErrors() {
+        $('.vt-url-error').hide();
+    }
+
     function doUpdatePreview() {
         var $container = $('#vt-admin-preview');
         var source = getCurrentSource();
-        var emptyHtml = '<div class="vt-preview-empty"><span class="dashicons dashicons-video-alt3"></span><p>Enter a video URL to see preview</p></div>';
 
         destroyPreview();
+        hideUrlErrors();
 
         if (!source.url) {
-            $container.html(emptyHtml);
+            $container.empty().hide();
             return;
         }
 
         if (source.provider === 'youtube') {
             var ytId = extractYouTubeId(source.url);
             if (!ytId) {
-                $container.html(emptyHtml);
+                $container.empty().hide();
+                showUrlError('Could not detect a valid video ID from this URL.');
                 return;
             }
             var ytDiv = document.createElement('div');
             ytDiv.id = 'vt-preview-player';
             ytDiv.setAttribute('data-plyr-provider', 'youtube');
             ytDiv.setAttribute('data-plyr-embed-id', ytId);
-            $container.empty().append(ytDiv);
+            $container.empty().append(ytDiv).show();
             previewPlayer = new Plyr('#vt-preview-player', { muted: true });
         } else if (source.provider === 'vimeo') {
             var vmId = extractVimeoId(source.url);
             if (!vmId) {
-                $container.html(emptyHtml);
+                $container.empty().hide();
+                showUrlError('Could not detect a valid video ID from this URL.');
                 return;
             }
             var vmDiv = document.createElement('div');
             vmDiv.id = 'vt-preview-player';
             vmDiv.setAttribute('data-plyr-provider', 'vimeo');
             vmDiv.setAttribute('data-plyr-embed-id', vmId);
-            $container.empty().append(vmDiv);
+            $container.empty().append(vmDiv).show();
             previewPlayer = new Plyr('#vt-preview-player', { muted: true });
         } else if (source.type === 'external' || source.type === 'media_library') {
             var video = document.createElement('video');
@@ -258,10 +325,14 @@
             video.src = source.url;
             video.crossOrigin = 'anonymous';
             video.playsInline = true;
-            $container.empty().append(video);
+            $(video).on('error', function () {
+                $container.empty().hide();
+                showUrlError('Video could not be loaded. Please check the URL.');
+            });
+            $container.empty().append(video).show();
             previewPlayer = new Plyr('#vt-preview-player', { muted: true });
         } else {
-            $container.html(emptyHtml);
+            $container.empty().hide();
         }
     }
 
@@ -296,6 +367,7 @@
     $(function () {
         initTabs();
         initMediaUploader();
+        initPosterPicker();
         initTeaserToggle();
         initColorPickers();
         initShortcodeCopy();

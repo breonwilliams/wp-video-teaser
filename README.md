@@ -163,6 +163,14 @@ A: The button size is optimized for all devices (80px desktop, 64px mobile).
 
 ## Changelog
 
+### 2.1.1
+- Fixed admin preview Plyr button hover state to match frontend
+- Changed video source options from radio buttons to dropdown for compactness
+
+### 2.1.0
+- Added configurable aspect ratio setting (16:9, 4:3, 21:9, Auto)
+- Added GitHub-based auto-updater for seamless plugin updates
+
 ### 2.0.0
 - Complete rewrite with modular class-based architecture
 - Added Vimeo, Media Library, and external MP4 source support

@@ -79,26 +79,35 @@ class Video_Teaser_Shortcode {
             Video_Teaser_Assets::enqueue_frontend();
         }
 
-        // Gather settings.
-        $teaser_enabled     = get_post_meta( $post_id, '_vt_teaser_enabled', true );
-        $start_time         = get_post_meta( $post_id, '_vt_start_time', true );
-        $end_time           = get_post_meta( $post_id, '_vt_end_time', true );
-        $button_color       = get_post_meta( $post_id, '_vt_button_color', true ) ?: '#00b3ff';
-        $aspect_ratio       = get_post_meta( $post_id, '_vt_aspect_ratio', true ) ?: '16:9';
+        // Gather settings via single query.
+        $all_meta           = get_post_meta( $post_id );
+        $teaser_enabled     = isset( $all_meta['_vt_teaser_enabled'][0] ) ? $all_meta['_vt_teaser_enabled'][0] : '';
+        $start_time         = isset( $all_meta['_vt_start_time'][0] ) ? $all_meta['_vt_start_time'][0] : '';
+        $end_time           = isset( $all_meta['_vt_end_time'][0] ) ? $all_meta['_vt_end_time'][0] : '';
+        $button_color       = ! empty( $all_meta['_vt_button_color'][0] ) ? $all_meta['_vt_button_color'][0] : '#00b3ff';
+        $aspect_ratio       = ! empty( $all_meta['_vt_aspect_ratio'][0] ) ? $all_meta['_vt_aspect_ratio'][0] : '16:9';
+        $poster_id          = isset( $all_meta['_vt_poster_image'][0] ) ? $all_meta['_vt_poster_image'][0] : '';
+        $poster_url         = $poster_id ? wp_get_attachment_image_url( absint( $poster_id ), 'full' ) : '';
+
+        // Validate aspect ratio.
+        $allowed_ratios = array( '16:9', '4:3', '21:9', '1:1', '9:16', 'auto' );
+        if ( ! in_array( $aspect_ratio, $allowed_ratios, true ) ) {
+            $aspect_ratio = '16:9';
+        }
 
         // Legacy fallbacks for teaser settings.
         if ( $teaser_enabled === '' ) {
-            $legacy_start = get_post_meta( $post_id, '_start_time', true );
+            $legacy_start = isset( $all_meta['_start_time'][0] ) ? $all_meta['_start_time'][0] : '';
             if ( $legacy_start !== '' ) {
                 $teaser_enabled = '1';
                 $start_time     = $legacy_start;
-                $end_time       = get_post_meta( $post_id, '_end_time', true );
+                $end_time       = isset( $all_meta['_end_time'][0] ) ? $all_meta['_end_time'][0] : '';
             } else {
                 $teaser_enabled = '1';
             }
         }
         if ( $button_color === '#00b3ff' ) {
-            $legacy_btn = get_post_meta( $post_id, '_button_color', true );
+            $legacy_btn = isset( $all_meta['_button_color'][0] ) ? $all_meta['_button_color'][0] : '';
             if ( ! empty( $legacy_btn ) ) {
                 $button_color = $legacy_btn;
             }
@@ -151,7 +160,7 @@ class Video_Teaser_Shortcode {
         </style>
         <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>" id="<?php echo esc_attr( $unique_id ); ?>"<?php echo $data_string; ?>>
             <div class="vt-player-wrap">
-                <?php echo $this->render_player_element( $source ); ?>
+                <?php echo $this->render_player_element( $source, $poster_url ); ?>
             </div>
         </div>
         <?php
@@ -184,10 +193,11 @@ class Video_Teaser_Shortcode {
     /**
      * Render the inner player element based on source type.
      *
-     * @param array $source Source data.
+     * @param array  $source     Source data.
+     * @param string $poster_url Optional poster image URL.
      * @return string HTML.
      */
-    private function render_player_element( $source ) {
+    private function render_player_element( $source, $poster_url = '' ) {
         switch ( $source['source_type'] ) {
             case Video_Teaser_Video_Source::TYPE_YOUTUBE:
                 return sprintf(
@@ -202,17 +212,30 @@ class Video_Teaser_Shortcode {
                 );
 
             case Video_Teaser_Video_Source::TYPE_MEDIA_LIBRARY:
-                return sprintf(
-                    '<video class="vt-player" playsinline preload="metadata"><source src="%s" type="video/mp4"></video>',
-                    esc_url( $source['video_url'] )
-                );
+                return $this->render_video_tag( $source['video_url'], $poster_url );
 
             case Video_Teaser_Video_Source::TYPE_EXTERNAL:
-                return sprintf(
-                    '<video class="vt-player" playsinline preload="metadata"><source src="%s" type="video/mp4"></video>',
-                    esc_url( $source['external_url'] )
-                );
+                return $this->render_video_tag( $source['external_url'], $poster_url );
         }
         return '';
+    }
+
+    /**
+     * Build a <video> tag with optional poster and appropriate preload.
+     *
+     * @param string $video_url  Video source URL.
+     * @param string $poster_url Poster image URL (empty to use preload="auto" fallback).
+     * @return string HTML.
+     */
+    private function render_video_tag( $video_url, $poster_url = '' ) {
+        $poster_attr  = $poster_url ? sprintf( ' poster="%s"', esc_url( $poster_url ) ) : '';
+        $preload      = $poster_url ? 'metadata' : 'auto';
+
+        return sprintf(
+            '<video class="vt-player" playsinline preload="%s"%s><source src="%s" type="video/mp4"></video>',
+            esc_attr( $preload ),
+            $poster_attr,
+            esc_url( $video_url )
+        );
     }
 }

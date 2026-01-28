@@ -38,6 +38,10 @@
     border-radius: 0;
 }
 
+.vt-player-wrap .plyr__poster {
+    background-size: cover;
+}
+
 /* -----------------------------------------------
    Play-Full Overlay Button
    ----------------------------------------------- */
@@ -92,4 +96,16 @@
 .vt-teaser-active .vt-play-full:focus {
     opacity: 1;
     background: var(--plyr-video-control-background-hover, var(--plyr-color-main, #00b2ff));
+}
+
+/* -----------------------------------------------
+   Override WordPress global button:hover/focus
+   WP themes set background-color: #3f4047 on
+   button:hover/focus which turns Plyr controls gray.
+   This resets only that background on Plyr controls.
+   ----------------------------------------------- */
+.vt-container .plyr__controls button:hover,
+.vt-container .plyr__controls button:focus,
+.vt-container .plyr__controls button:active {
+    background-color: transparent;
 }

@@ -22,7 +22,9 @@
     function safePlay(player) {
         var promise = player.play();
         if (promise && typeof promise.catch === 'function') {
-            promise.catch(function () {});
+            promise.catch(function (e) {
+                log('Play failed: ' + e.message);
+            });
         }
     }
 
@@ -50,6 +52,12 @@
         var startTime = parseInt(container.getAttribute('data-vt-start'), 10) || 0;
         var endTime = parseInt(container.getAttribute('data-vt-end'), 10) || 10;
 
+        if (teaserEnabled && startTime >= endTime) {
+            log(id + ': startTime >= endTime, disabling teaser loop');
+            startTime = 0;
+            endTime = 10;
+        }
+
         var ratioAttr = container.getAttribute('data-vt-ratio') || '16:9';
 
         var playerEl = container.querySelector('.vt-player');
@@ -68,7 +76,7 @@
             tooltips: { controls: true, seek: true },
             clickToPlay: true,
             hideControls: true,
-            autopause: true,
+            autopause: false,
             resetOnEnd: false,
             muted: teaserEnabled,
             autoplay: teaserEnabled,
@@ -76,8 +84,8 @@
             youtube: {
                 noCookie: true,
                 rel: 0,
-                showinfo: 0,
                 modestbranding: 1,
+                playsinline: 1,
             },
             vimeo: {
                 byline: false,
@@ -87,7 +95,23 @@
             },
         };
 
-        var player = new Plyr(playerEl, plyrOptions);
+        var player;
+        try {
+            player = new Plyr(playerEl, plyrOptions);
+        } catch (e) {
+            log('Plyr init failed for ' + id + ': ' + e.message);
+            return;
+        }
+
+        if (ratioAttr === 'auto' && playerEl.tagName === 'VIDEO') {
+            playerEl.addEventListener('loadedmetadata', function () {
+                var w = playerEl.videoWidth;
+                var h = playerEl.videoHeight;
+                if (w && h) {
+                    player.ratio = w + ':' + h;
+                }
+            });
+        }
 
         var instance = {
             player: player,
@@ -121,24 +145,22 @@
             });
         }
 
-        // Use Plyr's native play event for multi-video management.
+        // When an unmuted video starts, revert the previous unmuted video.
+        // Muted teasers are invisible to this logic.
         player.on('play', function () {
-            if (!instance.isTeaser) {
-                if (activeId && activeId !== id && instances[activeId]) {
-                    revertToTeaser(activeId);
-                }
-                // Pause any auto-playing teasers.
-                for (var otherId in instances) {
-                    if (otherId !== id && instances[otherId].isTeaser) {
-                        instances[otherId].player.pause();
-                    }
-                }
-                activeId = id;
+            if (instance.isTeaser) return;
+
+            if (activeId && activeId !== id && instances[activeId]) {
+                revertToTeaser(activeId);
             }
+            activeId = id;
         });
 
         // Teaser loop via timeupdate.
         if (teaserEnabled) {
+            var isSeeking = false;
+            player.on('seeked', function () { isSeeking = false; });
+
             player.on('ready', function () {
                 log(id + ' player ready');
                 seekToStart(instance);
@@ -146,7 +168,7 @@
             });
 
             player.on('timeupdate', function () {
-                if (!instance.isTeaser) return;
+                if (!instance.isTeaser || isSeeking) return;
 
                 var current = player.currentTime;
                 var duration = player.duration;
@@ -154,6 +176,7 @@
 
                 // If past end, loop back to start.
                 if (current >= effectiveEnd) {
+                    isSeeking = true;
                     player.currentTime = instance.startTime;
                 }
             });
@@ -203,13 +226,6 @@
             revertToTeaser(activeId);
         }
 
-        // Pause any other teasers.
-        for (var otherId in instances) {
-            if (otherId !== id && instances[otherId].isTeaser) {
-                instances[otherId].player.pause();
-            }
-        }
-
         var instance = instances[id];
         if (!instance) return;
 
@@ -219,7 +235,12 @@
 
         var player = instance.player;
         player.muted = false;
-        player.restart();
+        try {
+            player.restart();
+        } catch (e) {
+            player.currentTime = 0;
+            safePlay(player);
+        }
 
         log('Now playing full: ' + id);
     }

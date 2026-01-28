@@ -16,7 +16,7 @@ class Video_Teaser_Assets {
      */
     public function init() {
         add_action( 'admin_enqueue_scripts', array( $this, 'admin_assets' ) );
-        add_action( 'wp_head', array( $this, 'preconnect_hints' ), 1 );
+        add_filter( 'wp_resource_hints', array( $this, 'resource_hints' ), 10, 2 );
     }
 
     /**
@@ -78,7 +78,11 @@ class Video_Teaser_Assets {
             'mediaButton' => __( 'Use this video', 'video-teaser' ),
             'changeLabel' => __( 'Change Video', 'video-teaser' ),
             'selectLabel' => __( 'Select Video', 'video-teaser' ),
-            'mediaUrl'    => $media_url,
+            'mediaUrl'          => $media_url,
+            'posterTitle'       => __( 'Select Poster Image', 'video-teaser' ),
+            'posterButton'      => __( 'Use this image', 'video-teaser' ),
+            'posterChangeLabel' => __( 'Change Image', 'video-teaser' ),
+            'posterSelectLabel' => __( 'Select Image', 'video-teaser' ),
         ) );
     }
 
@@ -127,10 +131,34 @@ class Video_Teaser_Assets {
     /**
      * Output preconnect hints for YouTube and Vimeo.
      */
-    public function preconnect_hints() {
-        echo '<link rel="preconnect" href="https://www.youtube.com" crossorigin>' . "\n";
-        echo '<link rel="preconnect" href="https://i.vimeocdn.com" crossorigin>' . "\n";
-        echo '<link rel="dns-prefetch" href="//www.youtube.com">' . "\n";
-        echo '<link rel="dns-prefetch" href="//player.vimeo.com">' . "\n";
+    /**
+     * Add preconnect and dns-prefetch hints only when video scripts are enqueued.
+     *
+     * @param array  $urls          URLs to print for resource hints.
+     * @param string $relation_type The relation type the URLs are printed for.
+     * @return array
+     */
+    public function resource_hints( $urls, $relation_type ) {
+        if ( ! wp_script_is( 'plyr', 'enqueued' ) ) {
+            return $urls;
+        }
+
+        if ( 'preconnect' === $relation_type ) {
+            $urls[] = array(
+                'href' => 'https://www.youtube.com',
+                'crossorigin' => 'anonymous',
+            );
+            $urls[] = array(
+                'href' => 'https://i.vimeocdn.com',
+                'crossorigin' => 'anonymous',
+            );
+        }
+
+        if ( 'dns-prefetch' === $relation_type ) {
+            $urls[] = '//www.youtube.com';
+            $urls[] = '//player.vimeo.com';
+        }
+
+        return $urls;
     }
 }

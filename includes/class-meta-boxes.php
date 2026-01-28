@@ -71,12 +71,7 @@ class Video_Teaser_Meta_Boxes {
             return;
         }
         ?>
-        <div id="vt-admin-preview">
-            <div class="vt-preview-empty">
-                <span class="dashicons dashicons-video-alt3"></span>
-                <p><?php esc_html_e( 'Enter a video URL to see preview', 'video-teaser' ); ?></p>
-            </div>
-        </div>
+        <div id="vt-admin-preview" style="display:none;"></div>
         <?php
     }
 
@@ -100,24 +95,22 @@ class Video_Teaser_Meta_Boxes {
         $media_title  = $media_id ? get_the_title( $media_id ) : '';
         ?>
         <div class="vt-source-tabs">
-            <div class="vt-source-radios">
-                <?php
-                $sources = array(
-                    'media_library' => __( 'Media Library', 'video-teaser' ),
-                    'youtube'       => __( 'YouTube', 'video-teaser' ),
-                    'vimeo'         => __( 'Vimeo', 'video-teaser' ),
-                    'external'      => __( 'External URL', 'video-teaser' ),
-                );
-                $selected = $type ?: 'youtube';
-                foreach ( $sources as $value => $label ) : ?>
-                    <label class="vt-source-radio">
-                        <input type="radio" name="vt_source_type_radio" value="<?php echo esc_attr( $value ); ?>" <?php checked( $selected, $value ); ?> />
+            <?php
+            $sources = array(
+                'media_library' => __( 'Media Library', 'video-teaser' ),
+                'youtube'       => __( 'YouTube', 'video-teaser' ),
+                'vimeo'         => __( 'Vimeo', 'video-teaser' ),
+                'external'      => __( 'External URL', 'video-teaser' ),
+            );
+            $selected = $type ?: 'youtube';
+            ?>
+            <select name="vt_source_type" id="vt_source_type" class="widefat">
+                <?php foreach ( $sources as $value => $label ) : ?>
+                    <option value="<?php echo esc_attr( $value ); ?>" <?php selected( $selected, $value ); ?>>
                         <?php echo esc_html( $label ); ?>
-                    </label>
+                    </option>
                 <?php endforeach; ?>
-            </div>
-
-            <input type="hidden" name="vt_source_type" id="vt_source_type" value="<?php echo esc_attr( $type ?: 'youtube' ); ?>" />
+            </select>
 
             <!-- Media Library Panel -->
             <div class="vt-tab-panel<?php echo ( $type === 'media_library' ) ? ' vt-tab-panel--active' : ''; ?>" data-panel="media_library" role="tabpanel">
@@ -236,6 +229,10 @@ class Video_Teaser_Meta_Boxes {
 
         $aspect_ratio = get_post_meta( $post->ID, '_vt_aspect_ratio', true );
         $aspect_ratio = $aspect_ratio ?: '16:9';
+
+        $poster_id  = get_post_meta( $post->ID, '_vt_poster_image', true );
+        $poster_id  = $poster_id ? absint( $poster_id ) : 0;
+        $poster_url = $poster_id ? wp_get_attachment_image_url( $poster_id, 'large' ) : '';
         ?>
         <div class="vt-appearance-settings">
             <div class="vt-field">
@@ -246,6 +243,21 @@ class Video_Teaser_Meta_Boxes {
                     <option value="21:9" <?php selected( $aspect_ratio, '21:9' ); ?>>21:9</option>
                     <option value="auto" <?php selected( $aspect_ratio, 'auto' ); ?>><?php esc_html_e( 'Auto (match video)', 'video-teaser' ); ?></option>
                 </select>
+            </div>
+            <div class="vt-field">
+                <label><?php esc_html_e( 'Poster Image', 'video-teaser' ); ?></label>
+                <div class="vt-poster-preview" id="vt-poster-preview" style="<?php echo $poster_id ? '' : 'display:none;'; ?>">
+                    <img id="vt-poster-thumb" src="<?php echo esc_url( $poster_url ); ?>" alt="" style="max-width:100%;height:auto;border-radius:4px;" />
+                    <button type="button" class="vt-poster-remove" id="vt-poster-remove" title="<?php esc_attr_e( 'Remove poster image', 'video-teaser' ); ?>">
+                        <span class="dashicons dashicons-no-alt"></span>
+                    </button>
+                </div>
+                <button type="button" class="button button-secondary" id="vt-poster-select">
+                    <span class="dashicons dashicons-format-image" style="vertical-align: middle; margin-top: -2px;"></span>
+                    <span class="vt-poster-btn-label"><?php echo $poster_id ? esc_html__( 'Change Image', 'video-teaser' ) : esc_html__( 'Select Image', 'video-teaser' ); ?></span>
+                </button>
+                <input type="hidden" name="vt_poster_image" id="vt_poster_image" value="<?php echo esc_attr( $poster_id ); ?>" />
+                <p class="description"><?php esc_html_e( 'Shown before the video plays. If empty, the first frame of the video will be used.', 'video-teaser' ); ?></p>
             </div>
             <div class="vt-field">
                 <label for="vt_button_color"><?php esc_html_e( 'Player Color', 'video-teaser' ); ?></label>
@@ -349,6 +361,9 @@ class Video_Teaser_Meta_Boxes {
         update_post_meta( $post_id, '_vt_end_time', $end_time );
 
         // Appearance.
+        $poster_image = isset( $_POST['vt_poster_image'] ) ? absint( $_POST['vt_poster_image'] ) : 0;
+        update_post_meta( $post_id, '_vt_poster_image', $poster_image );
+
         $aspect_ratio = isset( $_POST['vt_aspect_ratio'] ) ? sanitize_text_field( $_POST['vt_aspect_ratio'] ) : '16:9';
         if ( ! in_array( $aspect_ratio, array( '16:9', '4:3', '21:9', 'auto' ), true ) ) {
             $aspect_ratio = '16:9';
