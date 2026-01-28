@@ -32,6 +32,7 @@
 .vt-player-wrap {
     position: relative;
     width: 100%;
+    aspect-ratio: var(--vt-aspect-ratio, 16/9);
 }
 
 .vt-player-wrap .plyr {
@@ -99,13 +100,36 @@
 }
 
 /* -----------------------------------------------
-   Override WordPress global button:hover/focus
-   WP themes set background-color: #3f4047 on
-   button:hover/focus which turns Plyr controls gray.
-   This resets only that background on Plyr controls.
+   WordPress Theme & Plyr Menu Contrast Fix
+
+   Issues addressed:
+   1. WP themes set button:hover backgrounds globally
+   2. Plyr video control hover (color: #fff) bleeds into menus
+   3. Menu items need explicit text colors for accessibility
    ----------------------------------------------- */
+
+/* Reset control bar button hovers within Plyr to transparent */
 .vt-container .plyr__controls button:hover,
 .vt-container .plyr__controls button:focus,
 .vt-container .plyr__controls button:active {
     background-color: transparent;
+}
+
+/* Keep menu text dark on hover - override video control white text */
+.vt-container .plyr__menu__container .plyr__control:hover,
+.vt-container .plyr__menu__container .plyr__control:focus {
+    background-color: rgba(35, 40, 47, 0.1);
+    color: var(--plyr-menu-color, #4a5464);
+}
+
+/* Selected/hovered radio items get accent background + white text */
+.vt-container .plyr__menu__container [role="menuitemradio"]:hover,
+.vt-container .plyr__menu__container [role="menuitemradio"][aria-checked="true"] {
+    background: var(--plyr-color-main, #00b2ff) !important;
+    color: #fff !important;
+}
+
+/* Ensure radio button dot is visible on accent background */
+.vt-container .plyr__menu__container [role="menuitemradio"][aria-checked="true"]:before {
+    background: rgba(255, 255, 255, 0.3);
 }

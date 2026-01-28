@@ -151,12 +151,23 @@ class Video_Teaser_Shortcode {
             $data_string .= ' ' . $key . '="' . $val . '"';
         }
 
+        // Convert aspect ratio from colon format (16:9) to CSS format (16/9).
+        $aspect_ratio_css = '';
+        if ( $aspect_ratio !== 'auto' ) {
+            $aspect_ratio_css = '--vt-aspect-ratio: ' . str_replace( ':', '/', $aspect_ratio ) . ';';
+        }
+
         ob_start();
         ?>
         <style>
         #<?php echo esc_attr( $unique_id ); ?> {
             --vt-button-color: <?php echo sanitize_hex_color( $button_color ) ? esc_attr( $button_color ) : '#00b3ff'; ?>;
         }
+        <?php if ( $aspect_ratio_css ) : ?>
+        #<?php echo esc_attr( $unique_id ); ?> .vt-player-wrap {
+            <?php echo $aspect_ratio_css; ?>
+        }
+        <?php endif; ?>
         </style>
         <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>" id="<?php echo esc_attr( $unique_id ); ?>"<?php echo $data_string; ?>>
             <div class="vt-player-wrap">

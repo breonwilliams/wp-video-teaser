@@ -104,10 +104,30 @@ label[for="vt_button_color"] {
     height: 100%;
 }
 
-#vt-admin-preview .plyr__controls button:hover,
-#vt-admin-preview .plyr__controls button:focus,
-#vt-admin-preview .plyr__controls button:active {
+/* Reset all button hovers within admin preview Plyr */
+#vt-admin-preview .plyr button:hover,
+#vt-admin-preview .plyr button:focus,
+#vt-admin-preview .plyr button:active {
     background-color: transparent;
+}
+
+/* Keep menu text dark on hover */
+#vt-admin-preview .plyr__menu__container .plyr__control:hover,
+#vt-admin-preview .plyr__menu__container .plyr__control:focus {
+    background-color: rgba(35, 40, 47, 0.1);
+    color: var(--plyr-menu-color, #4a5464);
+}
+
+/* Selected/hovered radio items */
+#vt-admin-preview .plyr__menu__container [role="menuitemradio"]:hover,
+#vt-admin-preview .plyr__menu__container [role="menuitemradio"][aria-checked="true"] {
+    background: var(--plyr-color-main, #00b2ff) !important;
+    color: #fff !important;
+}
+
+/* Radio dot visibility */
+#vt-admin-preview .plyr__menu__container [role="menuitemradio"][aria-checked="true"]:before {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 /* Appearance settings — block-level labels */

@@ -66,11 +66,43 @@
             return;
         }
 
+        // Detect aspect ratio before Plyr initialization for self-hosted videos.
+        // This handles the case where metadata loads before Plyr is created.
+        var detectedRatio = null;
+        if (ratioAttr === 'auto' && playerEl.tagName === 'VIDEO') {
+            if (playerEl.videoWidth && playerEl.videoHeight) {
+                detectedRatio = playerEl.videoWidth + ':' + playerEl.videoHeight;
+                log(id + ': Pre-detected ratio ' + detectedRatio);
+            }
+        }
+
+        // Determine the ratio to use for Plyr initialization.
+        var plyrRatio;
+        if (detectedRatio) {
+            plyrRatio = detectedRatio;
+        } else if (ratioAttr !== 'auto') {
+            plyrRatio = ratioAttr;
+        } else {
+            plyrRatio = '16:9'; // Fallback for auto when metadata not yet loaded
+        }
+
         var plyrOptions = {
-            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
-            settings: ['speed'],
+            controls: [
+                'play-large',    // Large play button in center
+                'play',          // Play/pause in control bar
+                'progress',      // Progress/seek bar
+                'current-time',  // Current time display
+                'mute',          // Mute toggle
+                'volume',        // Volume slider
+                'captions',      // Captions toggle
+                'settings',      // Settings menu
+                'pip',           // Picture-in-Picture
+                'airplay',       // AirPlay for Apple devices
+                'fullscreen',    // Fullscreen toggle
+            ],
+            settings: ['captions', 'quality', 'speed'],
             speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-            ratio: ratioAttr !== 'auto' ? ratioAttr : undefined,
+            ratio: plyrRatio,
             storage: { enabled: false },
             keyboard: { focused: true, global: false },
             tooltips: { controls: true, seek: true },
@@ -103,12 +135,14 @@
             return;
         }
 
-        if (ratioAttr === 'auto' && playerEl.tagName === 'VIDEO') {
+        // Listen for metadata in case it loads after Plyr init (only if not already detected).
+        if (ratioAttr === 'auto' && playerEl.tagName === 'VIDEO' && !detectedRatio) {
             playerEl.addEventListener('loadedmetadata', function () {
                 var w = playerEl.videoWidth;
                 var h = playerEl.videoHeight;
                 if (w && h) {
                     player.ratio = w + ':' + h;
+                    log(id + ': Post-detected ratio ' + w + ':' + h);
                 }
             });
         }
