@@ -46,18 +46,18 @@ class Video_Teaser_Assets {
         wp_enqueue_style( 'plyr', VIDEO_TEASER_URL . 'assets/vendor/plyr.css', array(), '3.7.8' );
         wp_enqueue_script( 'plyr', VIDEO_TEASER_URL . 'assets/vendor/plyr.min.js', array(), '3.7.8', true );
 
-        // Plugin admin styles.
+        // Plugin admin styles (minified).
         wp_enqueue_style(
             'vt-admin',
-            VIDEO_TEASER_URL . 'assets/css/admin.css',
+            VIDEO_TEASER_URL . 'assets/css/admin.min.css',
             array( 'wp-color-picker', 'plyr' ),
             VIDEO_TEASER_VERSION
         );
 
-        // Plugin admin scripts.
+        // Plugin admin scripts (minified).
         wp_enqueue_script(
             'vt-admin',
-            VIDEO_TEASER_URL . 'assets/js/admin.js',
+            VIDEO_TEASER_URL . 'assets/js/admin.min.js',
             array( 'jquery', 'wp-color-picker', 'plyr' ),
             VIDEO_TEASER_VERSION,
             true
@@ -106,18 +106,18 @@ class Video_Teaser_Assets {
             true
         );
 
-        // Plugin frontend styles.
+        // Plugin frontend styles (minified).
         wp_enqueue_style(
             'vt-frontend',
-            VIDEO_TEASER_URL . 'assets/css/frontend.css',
+            VIDEO_TEASER_URL . 'assets/css/frontend.min.css',
             array( 'plyr' ),
             VIDEO_TEASER_VERSION
         );
 
-        // Plugin frontend scripts.
+        // Plugin frontend scripts (minified).
         wp_enqueue_script(
             'vt-frontend',
-            VIDEO_TEASER_URL . 'assets/js/frontend.js',
+            VIDEO_TEASER_URL . 'assets/js/frontend.min.js',
             array( 'plyr' ),
             VIDEO_TEASER_VERSION,
             true

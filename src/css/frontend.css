@@ -1,0 +1,121 @@
+/**
+ * Video Teaser — Frontend Styles
+ * @package Video_Teaser
+ */
+
+/* -----------------------------------------------
+   Container
+   ----------------------------------------------- */
+.vt-container {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  line-height: 0;
+
+  /* Map per-instance accent color to Plyr's UI */
+  --plyr-color-main: var(--vt-button-color, #00b3ff);
+  --plyr-video-background: #000;
+  --plyr-range-fill-background: var(--vt-button-color, #00b3ff);
+}
+
+/* -----------------------------------------------
+   Player Wrapper
+   ----------------------------------------------- */
+.vt-player-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--vt-aspect-ratio, 16/9);
+}
+
+.vt-player-wrap .plyr {
+  border-radius: 0;
+}
+
+.vt-player-wrap .plyr__poster {
+  background-size: cover;
+}
+
+/* -----------------------------------------------
+   Play-Full Overlay Button
+   ----------------------------------------------- */
+.vt-play-full {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  border: 0;
+  border-radius: 100%;
+  background: var(--plyr-video-control-background-hover, var(--plyr-color-main, #00b3ff));
+  color: var(--plyr-video-control-color, #fff);
+  padding: calc(var(--plyr-control-spacing, 10px) * 1.5);
+  opacity: 0;
+  visibility: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.vt-play-full svg {
+  fill: currentColor;
+  display: block;
+  width: var(--plyr-control-icon-size, 18px);
+  height: var(--plyr-control-icon-size, 18px);
+  pointer-events: none;
+  left: 2px;
+  position: relative;
+}
+
+/* Always visible on touch devices */
+.vt-teaser-active .vt-play-full {
+  visibility: visible;
+  opacity: 0.9;
+}
+
+/* On hover-capable devices, hide by default and show on hover */
+@media (hover: hover) {
+  .vt-teaser-active .vt-play-full {
+    visibility: hidden;
+    opacity: 0;
+  }
+  .vt-teaser-active:hover .vt-play-full {
+    visibility: visible;
+    opacity: 0.9;
+  }
+}
+
+.vt-teaser-active .vt-play-full:hover,
+.vt-teaser-active .vt-play-full:focus {
+  opacity: 1;
+  background: var(--plyr-video-control-background-hover, var(--plyr-color-main, #00b3ff));
+}
+
+/* -----------------------------------------------
+   Theme Conflict Fixes
+   ----------------------------------------------- */
+.vt-container .plyr__controls button:hover,
+.vt-container .plyr__controls button:focus,
+.vt-container .plyr__controls button:active {
+  background-color: transparent;
+}
+
+.vt-container .plyr__menu__container .plyr__control:hover,
+.vt-container .plyr__menu__container .plyr__control:focus {
+  background-color: rgba(35, 40, 47, 0.1);
+  color: var(--plyr-menu-color, #4a5464);
+}
+
+.vt-container .plyr__menu__container [role="menuitemradio"]:hover,
+.vt-container .plyr__menu__container [role="menuitemradio"][aria-checked="true"] {
+  background: var(--plyr-color-main, #00b3ff) !important;
+  color: #fff !important;
+}
+
+.vt-container .plyr__menu__container [role="menuitemradio"][aria-checked="true"]::before {
+  background: rgba(255, 255, 255, 0.3);
+}
