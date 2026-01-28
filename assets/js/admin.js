@@ -265,6 +265,23 @@
         }
     }
 
+    function initAspectRatio() {
+        var $select = $('#vt_aspect_ratio');
+        var $preview = $('#vt-admin-preview');
+
+        function applyRatio() {
+            var val = $select.val() || '16:9';
+            if (val === 'auto') {
+                $preview.css('aspect-ratio', '');
+            } else {
+                $preview.css('aspect-ratio', val.replace(':', ' / '));
+            }
+        }
+
+        $select.on('change', applyRatio);
+        applyRatio();
+    }
+
     function initPreview() {
         // Listen for URL input changes (debounced via updatePreview).
         $('#vt_youtube_url, #vt_vimeo_url, #vt_external_url').on('input', updatePreview);
@@ -282,6 +299,7 @@
         initTeaserToggle();
         initColorPickers();
         initShortcodeCopy();
+        initAspectRatio();
         initPreview();
     });
 })(jQuery);

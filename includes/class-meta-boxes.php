@@ -233,8 +233,20 @@ class Video_Teaser_Meta_Boxes {
         }
 
         $button_color = $button_color ?: '#00b3ff';
+
+        $aspect_ratio = get_post_meta( $post->ID, '_vt_aspect_ratio', true );
+        $aspect_ratio = $aspect_ratio ?: '16:9';
         ?>
         <div class="vt-appearance-settings">
+            <div class="vt-field">
+                <label for="vt_aspect_ratio"><?php esc_html_e( 'Aspect Ratio', 'video-teaser' ); ?></label>
+                <select id="vt_aspect_ratio" name="vt_aspect_ratio" class="widefat">
+                    <option value="16:9" <?php selected( $aspect_ratio, '16:9' ); ?>>16:9</option>
+                    <option value="4:3" <?php selected( $aspect_ratio, '4:3' ); ?>>4:3</option>
+                    <option value="21:9" <?php selected( $aspect_ratio, '21:9' ); ?>>21:9</option>
+                    <option value="auto" <?php selected( $aspect_ratio, 'auto' ); ?>><?php esc_html_e( 'Auto (match video)', 'video-teaser' ); ?></option>
+                </select>
+            </div>
             <div class="vt-field">
                 <label for="vt_button_color"><?php esc_html_e( 'Player Color', 'video-teaser' ); ?></label>
                 <input type="text" id="vt_button_color" name="vt_button_color" value="<?php echo esc_attr( $button_color ); ?>" class="vt-color-picker" data-default-color="#00b3ff" />
@@ -337,6 +349,12 @@ class Video_Teaser_Meta_Boxes {
         update_post_meta( $post_id, '_vt_end_time', $end_time );
 
         // Appearance.
+        $aspect_ratio = isset( $_POST['vt_aspect_ratio'] ) ? sanitize_text_field( $_POST['vt_aspect_ratio'] ) : '16:9';
+        if ( ! in_array( $aspect_ratio, array( '16:9', '4:3', '21:9', 'auto' ), true ) ) {
+            $aspect_ratio = '16:9';
+        }
+        update_post_meta( $post_id, '_vt_aspect_ratio', $aspect_ratio );
+
         $button_color = isset( $_POST['vt_button_color'] ) ? sanitize_hex_color( $_POST['vt_button_color'] ) : '#00b3ff';
         update_post_meta( $post_id, '_vt_button_color', $button_color ?: '#00b3ff' );
 

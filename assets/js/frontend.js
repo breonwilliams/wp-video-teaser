@@ -19,6 +19,13 @@
         }
     }
 
+    function safePlay(player) {
+        var promise = player.play();
+        if (promise && typeof promise.catch === 'function') {
+            promise.catch(function () {});
+        }
+    }
+
     /* -------------------------------------------
        Initialize all containers
        ------------------------------------------- */
@@ -43,6 +50,8 @@
         var startTime = parseInt(container.getAttribute('data-vt-start'), 10) || 0;
         var endTime = parseInt(container.getAttribute('data-vt-end'), 10) || 10;
 
+        var ratioAttr = container.getAttribute('data-vt-ratio') || '16:9';
+
         var playerEl = container.querySelector('.vt-player');
         if (!playerEl) {
             log('No .vt-player found in ' + id);
@@ -53,7 +62,7 @@
             controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
             settings: ['speed'],
             speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-            ratio: '16:9',
+            ratio: ratioAttr !== 'auto' ? ratioAttr : undefined,
             storage: { enabled: false },
             keyboard: { focused: true, global: false },
             tooltips: { controls: true, seek: true },
@@ -163,7 +172,7 @@
             player.on('ended', function () {
                 if (instance.isTeaser) {
                     player.currentTime = instance.startTime;
-                    player.play();
+                    safePlay(player);
                 }
             });
         }
@@ -180,7 +189,7 @@
             player.currentTime = instance.startTime;
         }
         player.muted = true;
-        player.play();
+        safePlay(player);
     }
 
     /* -------------------------------------------
@@ -228,7 +237,7 @@
             instance.isTeaser = true;
             instance.player.muted = true;
             instance.player.currentTime = instance.startTime;
-            instance.player.play();
+            safePlay(instance.player);
             instance.player.toggleControls(false);
             instance.container.classList.add('vt-teaser-active');
         } else {

@@ -84,6 +84,7 @@ class Video_Teaser_Shortcode {
         $start_time         = get_post_meta( $post_id, '_vt_start_time', true );
         $end_time           = get_post_meta( $post_id, '_vt_end_time', true );
         $button_color       = get_post_meta( $post_id, '_vt_button_color', true ) ?: '#00b3ff';
+        $aspect_ratio       = get_post_meta( $post_id, '_vt_aspect_ratio', true ) ?: '16:9';
 
         // Legacy fallbacks for teaser settings.
         if ( $teaser_enabled === '' ) {
@@ -111,6 +112,7 @@ class Video_Teaser_Shortcode {
 
         $data_attrs = array(
             'data-vt-source'  => esc_attr( $source['source_type'] ),
+            'data-vt-ratio'   => esc_attr( $aspect_ratio ),
             'data-vt-teaser'  => esc_attr( $teaser_enabled ),
             'data-vt-start'   => esc_attr( $start_time ),
             'data-vt-end'     => esc_attr( $end_time ),
