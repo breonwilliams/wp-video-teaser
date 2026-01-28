@@ -1,0 +1,136 @@
+<?php
+/**
+ * Script and style enqueue management.
+ *
+ * @package Video_Teaser
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class Video_Teaser_Assets {
+
+    /**
+     * Initialize hooks.
+     */
+    public function init() {
+        add_action( 'admin_enqueue_scripts', array( $this, 'admin_assets' ) );
+        add_action( 'wp_head', array( $this, 'preconnect_hints' ), 1 );
+    }
+
+    /**
+     * Enqueue admin assets on the video_teaser edit screen.
+     *
+     * @param string $hook_suffix Current admin page.
+     */
+    public function admin_assets( $hook_suffix ) {
+        $screen = get_current_screen();
+        if ( ! $screen || $screen->post_type !== Video_Teaser_Post_Type::SLUG ) {
+            return;
+        }
+
+        // Only on add/edit screens.
+        if ( ! in_array( $hook_suffix, array( 'post.php', 'post-new.php' ), true ) ) {
+            return;
+        }
+
+        // WordPress color picker.
+        wp_enqueue_style( 'wp-color-picker' );
+        wp_enqueue_script( 'wp-color-picker' );
+
+        // WordPress media uploader.
+        wp_enqueue_media();
+
+        // Plyr vendor (for admin preview).
+        wp_enqueue_style( 'plyr', VIDEO_TEASER_URL . 'assets/vendor/plyr.css', array(), '3.7.8' );
+        wp_enqueue_script( 'plyr', VIDEO_TEASER_URL . 'assets/vendor/plyr.min.js', array(), '3.7.8', true );
+
+        // Plugin admin styles.
+        wp_enqueue_style(
+            'vt-admin',
+            VIDEO_TEASER_URL . 'assets/css/admin.css',
+            array( 'wp-color-picker', 'plyr' ),
+            VIDEO_TEASER_VERSION
+        );
+
+        // Plugin admin scripts.
+        wp_enqueue_script(
+            'vt-admin',
+            VIDEO_TEASER_URL . 'assets/js/admin.js',
+            array( 'jquery', 'wp-color-picker', 'plyr' ),
+            VIDEO_TEASER_VERSION,
+            true
+        );
+
+        // Build media URL for preview if available.
+        $media_url = '';
+        $post_id = isset( $GLOBALS['post'] ) ? $GLOBALS['post']->ID : 0;
+        if ( $post_id ) {
+            $media_id = get_post_meta( $post_id, '_vt_media_id', true );
+            if ( $media_id ) {
+                $media_url = wp_get_attachment_url( $media_id );
+            }
+        }
+
+        wp_localize_script( 'vt-admin', 'vtAdmin', array(
+            'mediaTitle'  => __( 'Select Video', 'video-teaser' ),
+            'mediaButton' => __( 'Use this video', 'video-teaser' ),
+            'changeLabel' => __( 'Change Video', 'video-teaser' ),
+            'selectLabel' => __( 'Select Video', 'video-teaser' ),
+            'mediaUrl'    => $media_url,
+        ) );
+    }
+
+    /**
+     * Enqueue frontend assets. Called by the shortcode on first render.
+     */
+    public static function enqueue_frontend() {
+        // Plyr vendor.
+        wp_enqueue_style(
+            'plyr',
+            VIDEO_TEASER_URL . 'assets/vendor/plyr.css',
+            array(),
+            '3.7.8'
+        );
+
+        wp_enqueue_script(
+            'plyr',
+            VIDEO_TEASER_URL . 'assets/vendor/plyr.min.js',
+            array(),
+            '3.7.8',
+            true
+        );
+
+        // Plugin frontend styles.
+        wp_enqueue_style(
+            'vt-frontend',
+            VIDEO_TEASER_URL . 'assets/css/frontend.css',
+            array( 'plyr' ),
+            VIDEO_TEASER_VERSION
+        );
+
+        // Plugin frontend scripts.
+        wp_enqueue_script(
+            'vt-frontend',
+            VIDEO_TEASER_URL . 'assets/js/frontend.js',
+            array( 'plyr' ),
+            VIDEO_TEASER_VERSION,
+            true
+        );
+
+        wp_localize_script( 'vt-frontend', 'vtFrontend', array(
+            'debug' => defined( 'WP_DEBUG' ) && WP_DEBUG,
+        ) );
+    }
+
+    /**
+     * Output preconnect hints for YouTube and Vimeo.
+     */
+    public function preconnect_hints() {
+        echo '<link rel="preconnect" href="https://www.youtube.com" crossorigin>' . "\n";
+        echo '<link rel="preconnect" href="https://i.vimeocdn.com" crossorigin>' . "\n";
+        echo '<link rel="dns-prefetch" href="//www.youtube.com">' . "\n";
+        echo '<link rel="dns-prefetch" href="//player.vimeo.com">' . "\n";
+    }
+}

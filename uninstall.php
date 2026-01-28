@@ -1,39 +1,37 @@
 <?php
 /**
- * Uninstall script for Video Teaser plugin
- * 
- * This file is executed when the plugin is deleted from WordPress admin.
- * It cleans up all plugin data from the database.
+ * Uninstall script for Video Teaser plugin.
+ *
+ * Cleans up all plugin data when the plugin is deleted from WordPress admin.
+ *
+ * @package Video_Teaser
  */
 
-// If uninstall not called from WordPress, exit
-if (!defined('WP_UNINSTALL_PLUGIN')) {
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
     exit;
 }
 
-// Delete all video_teaser posts and their meta data
-$video_teasers = get_posts(array(
-    'post_type' => 'video_teaser',
+// Delete all video_teaser posts and their meta data.
+$video_teasers = get_posts( array(
+    'post_type'   => 'video_teaser',
     'numberposts' => -1,
-    'post_status' => 'any'
-));
+    'post_status' => 'any',
+) );
 
-foreach ($video_teasers as $teaser) {
-    // Delete all meta data for this post
-    delete_post_meta($teaser->ID, '_youtube_url');
-    delete_post_meta($teaser->ID, '_video_id');
-    delete_post_meta($teaser->ID, '_start_time');
-    delete_post_meta($teaser->ID, '_end_time');
-    delete_post_meta($teaser->ID, '_button_color');
-    delete_post_meta($teaser->ID, '_icon_color');
-    
-    // Force delete the post (bypass trash)
-    wp_delete_post($teaser->ID, true);
+foreach ( $video_teasers as $teaser ) {
+    wp_delete_post( $teaser->ID, true );
 }
 
-// Remove any orphaned meta data (safety cleanup)
+// Clean up any orphaned meta data (v2 keys).
 global $wpdb;
-$wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_youtube_url%' OR meta_key LIKE '_video_id%' OR meta_key LIKE '_start_time%' OR meta_key LIKE '_end_time%' OR meta_key LIKE '_button_color%' OR meta_key LIKE '_icon_color%'");
+$like = $wpdb->esc_like( '_vt_' ) . '%';
+$wpdb->query(
+    $wpdb->prepare( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s", $like )
+);
 
-// Clear any cached data
+// Legacy v1 meta keys are not explicitly deleted here because
+// wp_delete_post() above already removes all postmeta for video_teaser posts.
+// Deleting generic keys like _start_time globally would risk removing
+// other plugins' data.
+
 wp_cache_flush();

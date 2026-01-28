@@ -1,27 +1,29 @@
 # Video Teaser WordPress Plugin
 
-Create engaging YouTube video teasers with autoplay loop and click-to-play functionality for WordPress.
+Create engaging video teasers with autoplay loop and click-to-play functionality for WordPress. Supports YouTube, Vimeo, Media Library, and external MP4 sources. Powered by [Plyr](https://plyr.io/).
 
 ## Overview
 
-Video Teaser allows you to showcase YouTube videos with a clean, professional teaser that automatically loops a specific segment. When users click the play button, they're taken to the full video with controls. Perfect for landing pages, product demos, and marketing content.
+Video Teaser lets you showcase videos from multiple sources with a clean, professional teaser that automatically loops a specific segment. When users click the play button, the full video plays with controls. Teaser mode is optional — you can also display a standard video player. When multiple video teasers are on a page, only one plays at a time.
 
 ## Features
 
-- **🎬 YouTube Video Teasers** - Automatically loop specific video segments
-- **🎨 Custom Styling** - Customizable play button and icon colors
-- **📱 Responsive Design** - Works perfectly on all devices
-- **♿ Accessible** - Full keyboard navigation and screen reader support
-- **🚀 Clean & Minimal** - Flat design with no unnecessary visual clutter
-- **⚡ Performance Optimized** - Lightweight with production-ready code
-- **🌐 Translation Ready** - Full internationalization support
+- **Multi-Source Support** — YouTube, Vimeo, Media Library (uploaded), and external MP4 URLs
+- **Plyr Player** — Consistent, accessible video player across all sources
+- **Optional Teaser Mode** — Toggle teaser looping on or off per video
+- **Admin Preview** — Live video preview in the editor while configuring
+- **Single Active Video** — Only one video plays at a time when multiple teasers are on a page
+- **Custom Play Button Color** — Color picker for the play button overlay
+- **Responsive Design** — Works on all devices
+- **Accessible** — Keyboard navigation and screen reader support
+- **Translation Ready** — Full internationalization support
 
 ## Installation
 
 1. **Download** the plugin files
 2. **Upload** to `/wp-content/plugins/video-teaser/` directory
 3. **Activate** the plugin through the 'Plugins' menu in WordPress
-4. **Create** your first video teaser!
+4. **Create** your first video teaser
 
 ## Usage
 
@@ -29,12 +31,11 @@ Video Teaser allows you to showcase YouTube videos with a clean, professional te
 
 1. Go to **Video Teasers** in your WordPress admin
 2. Click **Add New**
-3. Enter the **YouTube URL**
-4. Set **Start Time** (in seconds) for the teaser segment
-5. Set **End Time** (in seconds) for the teaser segment
-6. Choose your **Play Button Color**
-7. Choose your **Play Icon Color**
-8. **Publish** the video teaser
+3. Select a **Video Source** tab: YouTube, Vimeo, Media Library, or External MP4
+4. Enter the URL or select a media file
+5. Optionally enable **Teaser Mode** and set start/end times for the looping segment
+6. Choose a **Play Button Color** using the color picker
+7. **Publish** the video teaser
 
 ### Displaying Video Teasers
 
@@ -44,25 +45,20 @@ Copy the shortcode from the Video Teaser edit screen and paste it anywhere:
 [video_teaser id="123"]
 ```
 
-### Customization Options
+### Video Source Options
 
-- **YouTube URL**: Full YouTube video URL
-- **Start Time**: When the teaser segment begins (seconds)
-- **End Time**: When the teaser segment ends (seconds)
-- **Play Button Color**: Background color of the circular play button
-- **Play Icon Color**: Color of the triangle play icon
+- **YouTube** — Paste a YouTube video URL
+- **Vimeo** — Paste a Vimeo video URL
+- **Media Library** — Select a video from your WordPress media library
+- **External MP4** — Paste a direct URL to an MP4 file
 
-## Examples
+### Teaser Settings
 
-**Product Demo Teaser**
-- Start: 30 seconds
-- End: 45 seconds
-- Creates a 15-second looping demo highlight
+- **Enable Teaser** — Toggle teaser looping on or off
+- **Start Time** — When the teaser segment begins (seconds)
+- **End Time** — When the teaser segment ends (seconds)
 
-**Testimonial Teaser**
-- Start: 0 seconds  
-- End: 10 seconds
-- Shows the first 10 seconds on repeat
+When teaser mode is off, the video displays as a standard Plyr player.
 
 ## Technical Details
 
@@ -74,10 +70,10 @@ Copy the shortcode from the Video Teaser edit screen and paste it anywhere:
 
 ### Browser Compatibility
 
-- ✅ Chrome 66+
-- ✅ Firefox 69+
-- ✅ Safari 11.1+
-- ✅ Edge 79+
+- Chrome 66+
+- Firefox 69+
+- Safari 11.1+
+- Edge 79+
 
 ### Security Features
 
@@ -86,69 +82,97 @@ Copy the shortcode from the Video Teaser edit screen and paste it anywhere:
 - Capability checks for user permissions
 - XSS protection with proper escaping
 
-### Performance Features
+### Performance
 
-- Conditional script loading
-- Minimal CSS footprint (~2KB)
-- Optimized JavaScript (~3KB)
-- No external dependencies
+- Conditional script loading (assets only enqueued when shortcode is present)
+- Plyr loaded from bundled vendor files (no external CDN calls)
 
-## Development
+### Dependencies
 
-### File Structure
+- [Plyr](https://plyr.io/) — bundled in `assets/vendor/`
+
+## File Structure
 
 ```
 video-teaser/
-├── video-teaser.php    # Main plugin file
-├── uninstall.php       # Cleanup on uninstall
-├── README.md          # Documentation
-└── languages/         # Translation files (future)
+├── video-teaser.php          # Main plugin file
+├── uninstall.php             # Cleanup on uninstall
+├── README.md                 # Documentation
+├── includes/
+│   ├── class-video-teaser.php    # Core bootstrap class
+│   ├── class-post-type.php       # Custom post type registration
+│   ├── class-meta-boxes.php      # Admin meta boxes & preview
+│   ├── class-shortcode.php       # [video_teaser] shortcode
+│   ├── class-assets.php          # Script/style enqueuing
+│   └── class-video-source.php    # Video source handling
+└── assets/
+    ├── css/
+    │   ├── admin.css             # Admin editor styles
+    │   └── frontend.css          # Frontend player styles
+    ├── js/
+    │   ├── admin.js              # Admin preview & meta box logic
+    │   └── frontend.js           # Frontend player & teaser logic
+    └── vendor/
+        ├── plyr.min.js           # Plyr player library
+        └── plyr.css              # Plyr player styles
 ```
-
-### Hooks & Filters
-
-The plugin follows WordPress coding standards and provides clean, maintainable code.
-
-### Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
 
 ## Troubleshooting
 
 ### Video Not Playing
-- Ensure the YouTube URL is valid and public
+- Ensure the video URL is valid and publicly accessible
 - Check that autoplay is allowed in your browser
-- Verify the video isn't age-restricted
+- For YouTube/Vimeo, verify the video allows embedding
 
 ### Teaser Not Looping
+- Confirm teaser mode is enabled
 - Confirm start time is less than end time
 - Check that both times are within the video duration
-- Ensure the video allows embedding
+
+### Media Library Video Not Loading
+- Verify the uploaded file is a supported video format (MP4 recommended)
+- Check that the file hasn't been deleted from the media library
+
+### External MP4 Not Playing
+- Verify the URL points directly to an MP4 file
+- Check that the server hosting the file allows cross-origin requests (CORS)
 
 ### Play Button Not Visible
-- Adjust the icon color for better contrast
-- Check that both button and icon colors are set
+- Adjust the play button color for better contrast against your video
 - Verify the shortcode ID is correct
 
 ## FAQ
 
-**Q: Can I use this with private YouTube videos?**
+**Q: What video sources are supported?**
+A: YouTube, Vimeo, WordPress Media Library uploads, and direct external MP4 URLs.
+
+**Q: Can I use this with private YouTube or Vimeo videos?**
 A: No, the video must be public and allow embedding.
 
-**Q: Can I customize the button size?**
-A: The button size is optimized for all devices (80px desktop, 64px mobile).
+**Q: Is teaser mode required?**
+A: No. Teaser mode is optional. With it disabled, the video displays as a standard player.
+
+**Q: Can I use multiple teasers on one page?**
+A: Yes. Only one video will play at a time — starting a new video pauses the others.
 
 **Q: Does this work with YouTube Shorts?**
 A: Yes, but the teaser timing may need adjustment.
 
-**Q: Can I use multiple teasers on one page?**
-A: Yes, you can use as many teasers as needed.
+**Q: Can I customize the button size?**
+A: The button size is optimized for all devices (80px desktop, 64px mobile).
 
 ## Changelog
+
+### 2.0.0
+- Complete rewrite with modular class-based architecture
+- Added Vimeo, Media Library, and external MP4 source support
+- Integrated Plyr player for consistent playback across all sources
+- Teaser mode is now optional (toggle per video)
+- Added live admin preview
+- Consolidated play button and icon color into a single button color picker
+- Single active video enforcement when multiple teasers are on a page
+- Moved assets into `assets/` directory with separate admin/frontend files
+- Extracted logic into `includes/` classes
 
 ### 1.0.0
 - Initial release
@@ -156,7 +180,6 @@ A: Yes, you can use as many teasers as needed.
 - Custom color controls
 - Responsive design
 - Accessibility features
-- Production-ready security
 
 ## Support
 
@@ -170,7 +193,7 @@ This plugin is licensed under the GPL v2 or later.
 
 ```
 Video Teaser WordPress Plugin
-Copyright (C) 2024 Breon Williams
+Copyright (C) 2026 Breon Williams
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -186,7 +209,3 @@ GNU General Public License for more details.
 ## Credits
 
 Developed by **Breon Williams** - [breonwilliams.com](https://breonwilliams.com)
-
----
-
-Made with ❤️ for the WordPress community

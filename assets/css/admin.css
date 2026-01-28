@@ -1,0 +1,86 @@
+/**
+ * Video Teaser — Admin Styles
+ *
+ * Functional styles only — relies on default WordPress UI.
+ *
+ * @package Video_Teaser
+ */
+
+/* Tab panel show/hide */
+.vt-tab-panel {
+    display: none;
+}
+
+.vt-tab-panel--active {
+    display: block;
+}
+
+/* Source radio buttons */
+.vt-source-radios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 4px;
+}
+
+.vt-source-radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+/* Fields — spacing */
+.vt-field {
+    margin-top: 16px;
+}
+
+/* Labels — block-level so fields break below */
+.vt-field label,
+.vt-tab-panel label {
+    display: inline-block;
+    margin-bottom: 6px;
+}
+
+/* Visually hide Player Color label (still accessible to screen readers) */
+label[for="vt_button_color"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Fields — full width, stacked below labels */
+.vt-field input[type="url"],
+.vt-field input[type="text"],
+.vt-field input[type="number"],
+.vt-tab-panel input[type="url"],
+.vt-tab-panel input[type="text"] {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Video preview — full width with spacing */
+#vt-admin-preview {
+    width: 100%;
+    margin: 16px 0 0;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#vt-admin-preview .plyr,
+#vt-admin-preview iframe {
+    width: 100%;
+    height: 100%;
+}
