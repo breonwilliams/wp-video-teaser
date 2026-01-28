@@ -48,6 +48,7 @@ final class Video_Teaser {
         require_once VIDEO_TEASER_PATH . 'includes/class-meta-boxes.php';
         require_once VIDEO_TEASER_PATH . 'includes/class-shortcode.php';
         require_once VIDEO_TEASER_PATH . 'includes/class-assets.php';
+        require_once VIDEO_TEASER_PATH . 'includes/class-updater.php';
     }
 
     /**
@@ -58,6 +59,7 @@ final class Video_Teaser {
         ( new Video_Teaser_Meta_Boxes() )->init();
         ( new Video_Teaser_Shortcode() )->init();
         ( new Video_Teaser_Assets() )->init();
+        ( new Video_Teaser_Updater() )->init();
     }
 
     /**
