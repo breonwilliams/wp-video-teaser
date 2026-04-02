@@ -66,7 +66,7 @@ class Video_Teaser_Video_Source {
      * @return string|false Video ID or false.
      */
     public static function extract_youtube_id( $url ) {
-        $pattern = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/';
+        $pattern = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|shorts\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/';
         if ( preg_match( $pattern, $url, $matches ) ) {
             return $matches[1];
         }

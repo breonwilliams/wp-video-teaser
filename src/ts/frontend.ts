@@ -82,6 +82,17 @@ const VideoTeaser = ((): {
       return;
     }
 
+    // Get the player wrapper for loading state
+    const playerWrap = container.querySelector<HTMLElement>('.vt-player-wrap');
+
+    // Add loading state for videos without poster images (self-hosted only)
+    if (playerWrap && playerEl instanceof HTMLVideoElement && !playerEl.poster) {
+      playerWrap.classList.add('vt-loading');
+      playerEl.addEventListener('loadeddata', () => {
+        playerWrap.classList.remove('vt-loading');
+      }, { once: true });
+    }
+
     // Detect aspect ratio before Plyr initialization for self-hosted videos.
     let detectedRatio: string | null = null;
     if (ratioAttr === 'auto' && playerEl instanceof HTMLVideoElement) {
@@ -147,7 +158,16 @@ const VideoTeaser = ((): {
       player = new Plyr(playerEl, plyrOptions);
     } catch (e) {
       log(`Plyr init failed for ${id}: ${(e as Error).message}`);
+      // Show error to user.
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'vt-player-error';
+      errorDiv.textContent = 'Video player failed to load. Please refresh the page.';
+      container.appendChild(errorDiv);
       return;
+    }
+
+    if (!player) {
+      return; // Guard for subsequent player.* calls.
     }
 
     // Listen for metadata in case it loads after Plyr init.
@@ -221,6 +241,8 @@ const VideoTeaser = ((): {
 
     // Teaser loop via timeupdate.
     let isSeeking = false;
+    let lastSeekTime = 0;
+
     player.on('seeked', () => {
       isSeeking = false;
     });
@@ -234,12 +256,16 @@ const VideoTeaser = ((): {
     player.on('timeupdate', () => {
       if (!instance.isTeaser || isSeeking) return;
 
+      const now = Date.now();
+      if (now - lastSeekTime < 100) return; // Debounce 100ms.
+
       const current = player.currentTime;
       const duration = player.duration;
       const effectiveEnd = duration > 0 && endTime > duration ? duration - 0.5 : endTime;
 
       if (current >= effectiveEnd) {
         isSeeking = true;
+        lastSeekTime = now;
         player.currentTime = startTime;
       }
     });

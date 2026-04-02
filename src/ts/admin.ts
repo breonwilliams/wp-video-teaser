@@ -339,7 +339,9 @@ declare const vtAdmin: VtAdminConfig;
   }
 
   function extractVimeoId(url: string): string {
-    const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    const match = url.match(
+      /(?:vimeo\.com\/(?:video\/|channels\/[^\/]+\/|groups\/[^\/]+\/videos\/|album\/\d+\/video\/)?|player\.vimeo\.com\/video\/)(\d+)/
+    );
     return match ? match[1] : '';
   }
 

@@ -241,6 +241,8 @@ class Video_Teaser_Meta_Boxes {
                     <option value="16:9" <?php selected( $aspect_ratio, '16:9' ); ?>>16:9</option>
                     <option value="4:3" <?php selected( $aspect_ratio, '4:3' ); ?>>4:3</option>
                     <option value="21:9" <?php selected( $aspect_ratio, '21:9' ); ?>>21:9</option>
+                    <option value="1:1" <?php selected( $aspect_ratio, '1:1' ); ?>>1:1</option>
+                    <option value="9:16" <?php selected( $aspect_ratio, '9:16' ); ?>>9:16 (<?php esc_html_e( 'Vertical', 'video-teaser' ); ?>)</option>
                     <option value="auto" <?php selected( $aspect_ratio, 'auto' ); ?>><?php esc_html_e( 'Auto (match video)', 'video-teaser' ); ?></option>
                 </select>
             </div>
@@ -298,7 +300,7 @@ class Video_Teaser_Meta_Boxes {
             return;
         }
 
-        if ( ! isset( $_POST['vt_nonce'] ) || ! wp_verify_nonce( $_POST['vt_nonce'], 'vt_save_meta' ) ) {
+        if ( ! isset( $_POST['vt_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['vt_nonce'] ) ), 'vt_save_meta' ) ) {
             return;
         }
 
@@ -311,7 +313,7 @@ class Video_Teaser_Meta_Boxes {
         }
 
         // Source type.
-        $source_type = isset( $_POST['vt_source_type'] ) ? sanitize_text_field( $_POST['vt_source_type'] ) : '';
+        $source_type = isset( $_POST['vt_source_type'] ) ? sanitize_text_field( wp_unslash( $_POST['vt_source_type'] ) ) : '';
         if ( ! Video_Teaser_Video_Source::is_valid_type( $source_type ) ) {
             $source_type = 'youtube';
         }
@@ -319,10 +321,13 @@ class Video_Teaser_Meta_Boxes {
 
         // Media Library.
         $media_id = isset( $_POST['vt_media_id'] ) ? absint( $_POST['vt_media_id'] ) : 0;
+        if ( $media_id > 0 && ! Video_Teaser_Video_Source::validate_media_attachment( $media_id ) ) {
+            $media_id = 0; // Reset if invalid.
+        }
         update_post_meta( $post_id, '_vt_media_id', $media_id );
 
         // YouTube.
-        $youtube_url = isset( $_POST['vt_youtube_url'] ) ? sanitize_url( $_POST['vt_youtube_url'] ) : '';
+        $youtube_url = isset( $_POST['vt_youtube_url'] ) ? sanitize_url( wp_unslash( $_POST['vt_youtube_url'] ) ) : '';
         $youtube_id  = '';
         if ( ! empty( $youtube_url ) && Video_Teaser_Video_Source::validate_youtube_url( $youtube_url ) ) {
             $youtube_id = Video_Teaser_Video_Source::extract_youtube_id( $youtube_url );
@@ -331,7 +336,7 @@ class Video_Teaser_Meta_Boxes {
         update_post_meta( $post_id, '_vt_youtube_id', $youtube_id );
 
         // Vimeo.
-        $vimeo_url = isset( $_POST['vt_vimeo_url'] ) ? sanitize_url( $_POST['vt_vimeo_url'] ) : '';
+        $vimeo_url = isset( $_POST['vt_vimeo_url'] ) ? sanitize_url( wp_unslash( $_POST['vt_vimeo_url'] ) ) : '';
         $vimeo_id  = '';
         if ( ! empty( $vimeo_url ) && Video_Teaser_Video_Source::validate_vimeo_url( $vimeo_url ) ) {
             $vimeo_id = Video_Teaser_Video_Source::extract_vimeo_id( $vimeo_url );
@@ -340,7 +345,10 @@ class Video_Teaser_Meta_Boxes {
         update_post_meta( $post_id, '_vt_vimeo_id', $vimeo_id );
 
         // External URL.
-        $external_url = isset( $_POST['vt_external_url'] ) ? sanitize_url( $_POST['vt_external_url'] ) : '';
+        $external_url = isset( $_POST['vt_external_url'] ) ? sanitize_url( wp_unslash( $_POST['vt_external_url'] ) ) : '';
+        if ( ! empty( $external_url ) && ! Video_Teaser_Video_Source::validate_external_url( $external_url ) ) {
+            $external_url = ''; // Clear if invalid.
+        }
         update_post_meta( $post_id, '_vt_external_url', $external_url );
 
         // Teaser settings.
@@ -362,15 +370,21 @@ class Video_Teaser_Meta_Boxes {
 
         // Appearance.
         $poster_image = isset( $_POST['vt_poster_image'] ) ? absint( $_POST['vt_poster_image'] ) : 0;
+        if ( $poster_image > 0 ) {
+            $attachment = get_post( $poster_image );
+            if ( ! $attachment || $attachment->post_type !== 'attachment' || strpos( get_post_mime_type( $poster_image ), 'image/' ) !== 0 ) {
+                $poster_image = 0; // Reset if invalid.
+            }
+        }
         update_post_meta( $post_id, '_vt_poster_image', $poster_image );
 
-        $aspect_ratio = isset( $_POST['vt_aspect_ratio'] ) ? sanitize_text_field( $_POST['vt_aspect_ratio'] ) : '16:9';
-        if ( ! in_array( $aspect_ratio, array( '16:9', '4:3', '21:9', 'auto' ), true ) ) {
+        $aspect_ratio = isset( $_POST['vt_aspect_ratio'] ) ? sanitize_text_field( wp_unslash( $_POST['vt_aspect_ratio'] ) ) : '16:9';
+        if ( ! in_array( $aspect_ratio, array( '16:9', '4:3', '21:9', '1:1', '9:16', 'auto' ), true ) ) {
             $aspect_ratio = '16:9';
         }
         update_post_meta( $post_id, '_vt_aspect_ratio', $aspect_ratio );
 
-        $button_color = isset( $_POST['vt_button_color'] ) ? sanitize_hex_color( $_POST['vt_button_color'] ) : '#00b3ff';
+        $button_color = isset( $_POST['vt_button_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['vt_button_color'] ) ) : '#00b3ff';
         update_post_meta( $post_id, '_vt_button_color', $button_color ?: '#00b3ff' );
 
     }

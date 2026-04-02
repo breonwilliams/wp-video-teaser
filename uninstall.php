@@ -12,21 +12,22 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 }
 
 // Delete all video_teaser posts and their meta data.
-$video_teasers = get_posts( array(
+$vt_posts = get_posts( array(
     'post_type'   => 'video_teaser',
     'numberposts' => -1,
     'post_status' => 'any',
 ) );
 
-foreach ( $video_teasers as $teaser ) {
-    wp_delete_post( $teaser->ID, true );
+foreach ( $vt_posts as $vt_post ) {
+    wp_delete_post( $vt_post->ID, true );
 }
 
 // Clean up any orphaned meta data (v2 keys).
 global $wpdb;
-$like = $wpdb->esc_like( '_vt_' ) . '%';
+$vt_like = $wpdb->esc_like( '_vt_' ) . '%';
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- cleanup on uninstall requires direct query
 $wpdb->query(
-    $wpdb->prepare( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s", $like )
+    $wpdb->prepare( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s", $vt_like )
 );
 
 // Legacy v1 meta keys are not explicitly deleted here because

@@ -31,6 +31,26 @@
   aspect-ratio: var(--vt-aspect-ratio, 16/9);
 }
 
+/* Loading spinner for videos without poster images */
+.vt-player-wrap.vt-loading::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--vt-button-color, #00b3ff);
+  border-radius: 50%;
+  animation: vt-spin 0.8s linear infinite;
+  z-index: 5;
+}
+
+@keyframes vt-spin {
+  to { transform: rotate(360deg); }
+}
+
 .vt-player-wrap .plyr {
   border-radius: 0;
 }
@@ -118,4 +138,17 @@
 
 .vt-container .plyr__menu__container [role="menuitemradio"][aria-checked="true"]::before {
   background: rgba(255, 255, 255, 0.3);
+}
+
+/* -----------------------------------------------
+   Player Error State
+   ----------------------------------------------- */
+.vt-player-error {
+  padding: 20px;
+  text-align: center;
+  background: #f5f5f5;
+  color: #666;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.5;
 }

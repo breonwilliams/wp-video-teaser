@@ -115,6 +115,12 @@ class Video_Teaser_Shortcode {
         $start_time = $start_time !== '' ? absint( $start_time ) : 0;
         $end_time   = $end_time !== '' ? absint( $end_time ) : 10;
 
+        // Ensure valid time range.
+        if ( $start_time >= $end_time ) {
+            $start_time = 0;
+            $end_time   = 10;
+        }
+
         $unique_id = 'vt-' . $post_id . '-' . substr( uniqid(), -6 );
 
         $container_classes = array( 'vt-container' );
@@ -165,13 +171,22 @@ class Video_Teaser_Shortcode {
         }
         <?php if ( $aspect_ratio_css ) : ?>
         #<?php echo esc_attr( $unique_id ); ?> .vt-player-wrap {
-            <?php echo $aspect_ratio_css; ?>
+            <?php
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- value constructed from validated whitelist ratios only
+            echo $aspect_ratio_css;
+            ?>
         }
         <?php endif; ?>
         </style>
-        <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>" id="<?php echo esc_attr( $unique_id ); ?>"<?php echo $data_string; ?>>
+        <div class="<?php echo esc_attr( implode( ' ', $container_classes ) ); ?>" id="<?php echo esc_attr( $unique_id ); ?>"<?php
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- all values pre-escaped with esc_attr() or esc_url()
+            echo $data_string;
+        ?>>
             <div class="vt-player-wrap">
-                <?php echo $this->render_player_element( $source, $poster_url ); ?>
+                <?php
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_player_element returns escaped HTML
+                echo $this->render_player_element( $source, $poster_url );
+                ?>
             </div>
         </div>
         <?php
