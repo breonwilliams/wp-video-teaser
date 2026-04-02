@@ -88,9 +88,32 @@ const VideoTeaser = ((): {
     // Add loading state for videos without poster images (self-hosted only)
     if (playerWrap && playerEl instanceof HTMLVideoElement && !playerEl.poster) {
       playerWrap.classList.add('vt-loading');
-      playerEl.addEventListener('loadeddata', () => {
+
+      const showFirstFrame = () => {
+        // Seek to near-start to force browser to render first frame
+        if (playerEl.readyState >= 2 && playerEl.currentTime === 0) {
+          playerEl.currentTime = 0.001;
+        }
+      };
+
+      // Remove spinner once seeked (first frame visible)
+      playerEl.addEventListener('seeked', () => {
         playerWrap.classList.remove('vt-loading');
       }, { once: true });
+
+      // Fallback: remove spinner on loadeddata if no seek needed
+      playerEl.addEventListener('loadeddata', () => {
+        showFirstFrame();
+        // If already seeked or has frame, remove loading
+        if (playerEl.currentTime > 0 || playerEl.readyState >= 3) {
+          playerWrap.classList.remove('vt-loading');
+        }
+      }, { once: true });
+
+      // If already loaded, trigger immediately
+      if (playerEl.readyState >= 2) {
+        showFirstFrame();
+      }
     }
 
     // Detect aspect ratio before Plyr initialization for self-hosted videos.
