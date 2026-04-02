@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Video Teaser
- * Plugin URI: https://github.com/breonwilliams/video-teaser
+ * Plugin URI: https://github.com/breonwilliams/wp-video-teaser
  * Description: Create engaging video teasers with autoplay loop and click-to-play functionality. Supports Media Library, YouTube, Vimeo, and external MP4 sources. Powered by Plyr.
  * Version: 1.0.2
  * Author: Breon Williams
