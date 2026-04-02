@@ -3,7 +3,7 @@ Contributors: breonwilliams
 Tags: video, teaser, youtube, vimeo, plyr
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -87,6 +87,13 @@ Yes, but the teaser timing may need adjustment.
 3. Video source selection options
 
 == Changelog ==
+
+= 1.0.1 =
+* Added: Loading spinner for videos without poster images
+* Added: New aspect ratio options (1:1 Square, 9:16 Vertical)
+* Security: Improved input sanitization with wp_unslash and sanitize_text_field
+* Improved: Media attachment validation with graceful fallback
+* Improved: Frontend and admin code refinements
 
 = 1.0.0 =
 * Initial release
