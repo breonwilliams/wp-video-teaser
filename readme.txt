@@ -3,7 +3,7 @@ Contributors: breonwilliams
 Tags: video, teaser, youtube, vimeo, plyr
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -87,6 +87,9 @@ Yes, but the teaser timing may need adjustment.
 3. Video source selection options
 
 == Changelog ==
+
+= 1.0.2 =
+* Fix: Videos without poster images now display first frame instead of black screen
 
 = 1.0.1 =
 * Added: Loading spinner for videos without poster images
