@@ -28,6 +28,21 @@ final class Video_Teaser_Updater {
         add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_update' ) );
         add_filter( 'plugins_api', array( $this, 'get_plugin_info' ), 10, 3 );
         add_filter( 'upgrader_post_install', array( $this, 'post_install' ), 10, 3 );
+        add_action( 'admin_init', array( $this, 'maybe_clear_cache' ) );
+    }
+
+    /**
+     * Clear update cache when requested via URL parameter.
+     * Usage: /wp-admin/?clear_video_teaser_cache=1
+     */
+    public function maybe_clear_cache() {
+        if ( isset( $_GET['clear_video_teaser_cache'] ) && current_user_can( 'manage_options' ) ) {
+            delete_transient( $this->transient_key );
+            delete_site_transient( 'update_plugins' );
+            add_action( 'admin_notices', function() {
+                echo '<div class="notice notice-success is-dismissible"><p>Video Teaser update cache cleared. Refresh the Plugins page to check for updates.</p></div>';
+            });
+        }
     }
 
     private function get_latest_release() {
