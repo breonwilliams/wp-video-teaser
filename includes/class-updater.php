@@ -100,6 +100,8 @@ final class Video_Teaser_Updater {
                     '2x' => 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/icon-256x256.png',
                 ),
             );
+        } else {
+            unset( $transient->response[ $this->plugin_basename ] );
         }
 
         return $transient;
@@ -154,6 +156,10 @@ final class Video_Teaser_Updater {
         }
 
         activate_plugin( $this->plugin_basename );
+
+        // Clear cached data to force fresh update check.
+        delete_transient( $this->transient_key );
+        delete_site_transient( 'update_plugins' );
 
         return $response;
     }

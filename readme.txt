@@ -3,7 +3,7 @@ Contributors: breonwilliams
 Tags: video, teaser, youtube, vimeo, plyr
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -87,6 +87,9 @@ Yes, but the teaser timing may need adjustment.
 3. Video source selection options
 
 == Changelog ==
+
+= 1.0.4 =
+* Fix: Resolved phantom update notification that persisted after upgrading to latest version
 
 = 1.0.3 =
 * Fix: Videos without placeholder images now reliably display first frame on mobile Chrome (canvas-based extraction)
