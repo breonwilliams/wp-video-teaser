@@ -19,6 +19,37 @@
         }
     }
 
+    /**
+     * Extract the first frame from a video using canvas.
+     * Returns a blob URL via callback that can be used as a poster image.
+     */
+    function extractFirstFrame(video, onSuccess, onError) {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        if (!ctx) {
+            onError(new Error('Canvas not supported'));
+            return;
+        }
+
+        var onSeeked = function() {
+            canvas.width = video.videoWidth || video.clientWidth || 640;
+            canvas.height = video.videoHeight || video.clientHeight || 360;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(function(blob) {
+                if (blob) {
+                    var url = URL.createObjectURL(blob);
+                    onSuccess(url);
+                } else {
+                    onError(new Error('Failed to create blob'));
+                }
+            }, 'image/jpeg', 0.8);
+        };
+
+        video.addEventListener('seeked', onSeeked, { once: true });
+        video.currentTime = 0.1; // Seek to get first frame
+    }
+
     function safePlay(player) {
         var promise = player.play();
         if (promise && typeof promise.catch === 'function') {
@@ -64,6 +95,48 @@
         if (!playerEl) {
             log('No .vt-player found in ' + id);
             return;
+        }
+
+        // Get the player wrapper for loading state
+        var playerWrap = container.querySelector('.vt-player-wrap');
+
+        // Add loading state for videos without poster images (self-hosted only)
+        // Use canvas-based first frame extraction for reliable mobile support
+        if (playerWrap && playerEl.tagName === 'VIDEO' && !playerEl.poster) {
+            playerWrap.classList.add('vt-loading');
+
+            // Safety timeout: remove spinner after 3 seconds regardless
+            var loadingTimeout = setTimeout(function() {
+                playerWrap.classList.remove('vt-loading');
+                log(id + ': Loading timeout - removing spinner');
+            }, 3000);
+
+            var removeLoading = function() {
+                clearTimeout(loadingTimeout);
+                playerWrap.classList.remove('vt-loading');
+            };
+
+            // Force metadata load for mobile browsers
+            playerEl.load();
+
+            // Extract first frame when metadata is ready
+            var handleMetadata = function() {
+                extractFirstFrame(playerEl, function(blobUrl) {
+                    playerEl.poster = blobUrl;
+                    removeLoading();
+                    log(id + ': First frame extracted and set as poster');
+                }, function(err) {
+                    // Fallback: just remove loading state
+                    removeLoading();
+                    log(id + ': First frame extraction failed: ' + err.message);
+                });
+            };
+
+            if (playerEl.readyState >= 1) {
+                handleMetadata();
+            } else {
+                playerEl.addEventListener('loadedmetadata', handleMetadata, { once: true });
+            }
         }
 
         // Detect aspect ratio before Plyr initialization for self-hosted videos.

@@ -40,6 +40,39 @@ const VideoTeaser = ((): {
     }
   }
 
+  /**
+   * Extract the first frame from a video using canvas.
+   * Returns a blob URL that can be used as a poster image.
+   */
+  function extractFirstFrame(video: HTMLVideoElement): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas not supported'));
+        return;
+      }
+
+      const onSeeked = () => {
+        canvas.width = video.videoWidth || video.clientWidth || 640;
+        canvas.height = video.videoHeight || video.clientHeight || 360;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            resolve(url);
+          } else {
+            reject(new Error('Failed to create blob'));
+          }
+        }, 'image/jpeg', 0.8);
+      };
+
+      video.addEventListener('seeked', onSeeked, { once: true });
+      video.currentTime = 0.1; // Seek to get first frame
+    });
+  }
+
   async function safePlay(player: Plyr): Promise<void> {
     try {
       await player.play();
@@ -86,33 +119,43 @@ const VideoTeaser = ((): {
     const playerWrap = container.querySelector<HTMLElement>('.vt-player-wrap');
 
     // Add loading state for videos without poster images (self-hosted only)
+    // Use canvas-based first frame extraction for reliable mobile support
     if (playerWrap && playerEl instanceof HTMLVideoElement && !playerEl.poster) {
       playerWrap.classList.add('vt-loading');
 
-      const showFirstFrame = () => {
-        // Seek to near-start to force browser to render first frame
-        if (playerEl.readyState >= 2 && playerEl.currentTime === 0) {
-          playerEl.currentTime = 0.001;
-        }
+      // Safety timeout: remove spinner after 3 seconds regardless
+      const loadingTimeout = setTimeout(() => {
+        playerWrap.classList.remove('vt-loading');
+        log(`${id}: Loading timeout - removing spinner`);
+      }, 3000);
+
+      const removeLoading = () => {
+        clearTimeout(loadingTimeout);
+        playerWrap.classList.remove('vt-loading');
       };
 
-      // Remove spinner once seeked (first frame visible)
-      playerEl.addEventListener('seeked', () => {
-        playerWrap.classList.remove('vt-loading');
-      }, { once: true });
+      // Force metadata load for mobile browsers
+      playerEl.load();
 
-      // Fallback: remove spinner on loadeddata if no seek needed
-      playerEl.addEventListener('loadeddata', () => {
-        showFirstFrame();
-        // If already seeked or has frame, remove loading
-        if (playerEl.currentTime > 0 || playerEl.readyState >= 3) {
-          playerWrap.classList.remove('vt-loading');
-        }
-      }, { once: true });
+      // Extract first frame when metadata is ready
+      const handleMetadata = () => {
+        extractFirstFrame(playerEl)
+          .then((blobUrl) => {
+            playerEl.poster = blobUrl;
+            removeLoading();
+            log(`${id}: First frame extracted and set as poster`);
+          })
+          .catch((err) => {
+            // Fallback: just remove loading state
+            removeLoading();
+            log(`${id}: First frame extraction failed: ${err.message}`);
+          });
+      };
 
-      // If already loaded, trigger immediately
-      if (playerEl.readyState >= 2) {
-        showFirstFrame();
+      if (playerEl.readyState >= 1) {
+        handleMetadata();
+      } else {
+        playerEl.addEventListener('loadedmetadata', handleMetadata, { once: true });
       }
     }
 

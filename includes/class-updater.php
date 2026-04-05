@@ -95,6 +95,10 @@ final class Video_Teaser_Updater {
                 'new_version' => $remote_version,
                 'url'         => $release['html_url'] ?? '',
                 'package'     => $download_url,
+                'icons'       => array(
+                    '1x' => 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/icon-128x128.png',
+                    '2x' => 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/icon-256x256.png',
+                ),
             );
         }
 
@@ -120,6 +124,10 @@ final class Video_Teaser_Updater {
             'author'        => '<a href="https://breonwilliams.com">Breon Williams</a>',
             'homepage'      => 'https://github.com/' . $this->github_user . '/' . $this->github_repo,
             'download_link' => $this->get_download_url( $release ),
+            'icons'         => array(
+                '1x' => 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/icon-128x128.png',
+                '2x' => 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/icon-256x256.png',
+            ),
             'sections'      => array(
                 'description' => 'Create engaging video teasers with autoplay loop and click-to-play functionality.',
                 'changelog'   => nl2br( esc_html( $release['body'] ?? '' ) ),
