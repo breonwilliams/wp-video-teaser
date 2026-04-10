@@ -115,8 +115,22 @@ final class Video_Teaser_Updater {
                     '2x' => 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/icon-256x256.png',
                 ),
             );
+            // Remove from no_update if present.
+            unset( $transient->no_update[ $this->plugin_basename ] );
         } else {
+            // No update available - must add to no_update to clear stale notifications.
             unset( $transient->response[ $this->plugin_basename ] );
+            $transient->no_update[ $this->plugin_basename ] = (object) array(
+                'slug'        => $this->plugin_slug,
+                'plugin'      => $this->plugin_basename,
+                'new_version' => $this->current_version,
+                'url'         => $release['html_url'] ?? '',
+                'package'     => '',
+                'icons'       => array(
+                    '1x' => 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/icon-128x128.png',
+                    '2x' => 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/icon-256x256.png',
+                ),
+            );
         }
 
         return $transient;

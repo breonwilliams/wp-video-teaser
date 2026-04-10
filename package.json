@@ -1,6 +1,6 @@
 {
   "name": "video-teaser",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "WordPress plugin for video teasers with Plyr player",
   "scripts": {
     "build": "npm run build:js && npm run build:css",
