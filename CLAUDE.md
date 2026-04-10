@@ -8,7 +8,7 @@ This document provides essential context for AI-assisted development and documen
 
 - **GitHub Repository**: https://github.com/breonwilliams/wp-video-teaser
 - **Plugin Slug**: `video_teaser` (directory name, uses underscore)
-- **Current Version**: 1.0.4
+- **Current Version**: 1.0.5
 
 ## Architecture
 
