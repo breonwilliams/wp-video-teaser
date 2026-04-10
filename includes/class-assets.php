@@ -12,11 +12,65 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Video_Teaser_Assets {
 
     /**
+     * Whether the current page needs preconnect hints.
+     *
+     * @var bool
+     */
+    private static $needs_preconnect = false;
+
+    /**
      * Initialize hooks.
      */
     public function init() {
         add_action( 'admin_enqueue_scripts', array( $this, 'admin_assets' ) );
+        add_action( 'template_redirect', array( $this, 'detect_video_teaser_content' ) );
         add_filter( 'wp_resource_hints', array( $this, 'resource_hints' ), 10, 2 );
+    }
+
+    /**
+     * Detect if the current page contains a video teaser.
+     *
+     * This runs on template_redirect (before wp_head) so we can add
+     * preconnect hints before the shortcode actually enqueues scripts.
+     *
+     * Checks multiple sources to catch video teasers rendered via:
+     * - Direct shortcode in post content
+     * - Page builders (Elementor, Beaver Builder, Divi, etc.)
+     * - AI Section Builder (Promptless)
+     * - Any plugin storing "video_teaser" references in post meta
+     */
+    public function detect_video_teaser_content() {
+        if ( ! is_singular() ) {
+            return;
+        }
+
+        $post = get_queried_object();
+        if ( ! $post ) {
+            return;
+        }
+
+        // Check 1: Direct shortcode in post content.
+        if ( has_shortcode( $post->post_content, 'video_teaser' ) ) {
+            self::$needs_preconnect = true;
+            return;
+        }
+
+        // Check 2: Scan post meta for any video_teaser reference.
+        // This catches all page builders that store video_teaser shortcodes or IDs.
+        $all_meta = get_post_meta( $post->ID );
+        foreach ( $all_meta as $values ) {
+            foreach ( (array) $values as $value ) {
+                if ( is_string( $value ) && strpos( $value, 'video_teaser' ) !== false ) {
+                    self::$needs_preconnect = true;
+                    return;
+                }
+            }
+        }
+
+        // Check 3: Allow explicit override via filter (for edge cases).
+        if ( apply_filters( 'video_teaser_needs_preconnect', false, $post ) ) {
+            self::$needs_preconnect = true;
+        }
     }
 
     /**
@@ -139,11 +193,17 @@ class Video_Teaser_Assets {
      * @return array
      */
     public function resource_hints( $urls, $relation_type ) {
-        if ( ! wp_script_is( 'plyr', 'enqueued' ) ) {
+        // Check if Plyr is enqueued (admin) or if we detected video teaser content (frontend).
+        if ( ! wp_script_is( 'plyr', 'enqueued' ) && ! self::$needs_preconnect ) {
             return $urls;
         }
 
         if ( 'preconnect' === $relation_type ) {
+            // Plyr CDN - loads SVG sprite for player controls.
+            $urls[] = array(
+                'href' => 'https://cdn.plyr.io',
+                'crossorigin' => 'anonymous',
+            );
             $urls[] = array(
                 'href' => 'https://www.youtube.com',
                 'crossorigin' => 'anonymous',
